@@ -1,7 +1,60 @@
 from random import choice
 
 
-class SaganController:
+class StateMachine:
+
+    states = ()
+    events = ()
+    transitions = {}
+
+    def __init__(self):
+        self._state = 'halted'
+        self._next_state = None
+        self._event = None
+
+        # pre-start sanity check
+        for state in self.states:
+            assert hasattr(self, state), "Missing state method for {}".format(state)
+            for event, next_state in self.transitions[state].items():
+                assert next_state in self.states, "Unknown state {}".format(next_state)
+                assert event in self.events, "Unknown state {}".format(event)
+                assert hasattr(self, '{}_{}'.format(state, event)), "Missing event method for {} in state {}".format(
+                    event,
+                    state)
+
+    def transition_to(self, state):
+        print()
+        self._state = state
+
+    def dispatch_event(self, state, event):
+        print('event {}'.format(event))
+        return self.__getattribute__(
+            '{}_{}'.format(state, event))()
+
+    def dispatch_state(self, state):
+        return self.__getattribute__(
+            state
+        )()
+
+    def trigger(self, event):
+        assert event in self.transitions[self._state]
+        self.dispatch_event(self._state, event)
+        assert self._next_state is None
+        self._next_state = self.transitions[self._state][event]
+
+    def run(self):
+        while True:
+            print('state {}'.format(self._state))
+            self.dispatch_state(self._state)
+            if self._next_state is not None:
+                self._state = self._next_state
+                self._next_state = None
+
+            if self._state is 'halted':
+                return
+
+
+class SaganController(StateMachine):
     states = [
         'started',
         'starting_ap',
@@ -62,24 +115,6 @@ class SaganController:
             'token_expired': 'checking_in'
         }
     }
-
-    def __init__(self):
-        self._state = 'halted'
-        self._next_state = None
-        self._event = None
-
-        # pre-start sanity check
-        for state in self.states:
-            assert hasattr(self, state), "Missing state method for {}".format(state)
-            for event, next_state in self.transitions[state].items():
-                assert next_state in self.states, "Unknown state {}".format(next_state)
-                assert event in self.events, "Unknown state {}".format(event)
-                assert hasattr(self, '{}_{}'.format(state, event)), "Missing event method for {} in state {}".format(event,
-                                                                                                                  state)
-
-    def transition_to(self, state):
-        print()
-        self._state = state
 
     def halted(self):
         self.trigger('start')
@@ -146,33 +181,6 @@ class SaganController:
 
     def polling_for_work_token_expired(self):
         pass
-
-    def dispatch_event(self, state, event):
-        print('event {}'.format(event))
-        return self.__getattribute__(
-            '{}_{}'.format(state, event))()
-
-    def dispatch_state(self, state):
-        return self.__getattribute__(
-            state
-        )()
-
-    def trigger(self, event):
-        assert event in self.transitions[self._state]
-        self.dispatch_event(self._state, event)
-        assert self._next_state is None
-        self._next_state = self.transitions[self._state][event]
-
-    def run(self):
-        while True:
-            print('state {}'.format(self._state))
-            self.dispatch_state(self._state)
-            if self._next_state is not None:
-                self._state = self._next_state
-                self._next_state = None
-
-            if self._state is 'halted':
-                return
 
 
 def main():
