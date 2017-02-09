@@ -209,17 +209,13 @@ class SaganController(StateMachine):
             self.trigger('halt')
             return
         self.config['pairing_code'] = lines[0]
+        self.config['ssid'] = lines[1]
+        self.config['psk'] = lines[2]
         print('New config {}'.format(self.config))
         server.terminate()
         try:
             server.wait(10)
         except TimeoutExpired:
-            self.trigger('halt')
-
-        try:
-            check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
-            self.trigger('received_new_config')
-        except CalledProcessError:
             self.trigger('halt')
 
     def serving_config_page_received_new_config(self):
@@ -231,6 +227,7 @@ class SaganController(StateMachine):
     def attempting_wifi_connection(self):
         timeout = 2
         try:
+            check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
             check_call(['bash', 'check-connection.sh', str(timeout)])
             self.trigger('wifi_connection_success')
         except CalledProcessError:
