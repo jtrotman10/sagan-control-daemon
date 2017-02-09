@@ -208,18 +208,20 @@ class SaganController(StateMachine):
         if lines[3] != '\n':
             self.trigger('halt')
             return
-        self.config['pairing_code'] = lines[0]
-        self.config['ssid'] = lines[1]
-        self.config['psk'] = lines[2]
+        self.config['pairing_code'] = lines[0].strip()
+        self.config['ssid'] = lines[1].strip()
+        self.config['psk'] = lines[2].strip()
         print('New config {}'.format(self.config))
         server.terminate()
         try:
             server.wait(10)
-        except TimeoutExpired:
+            check_call(['bash', 'stop-ap.sh'])
+            self.trigger('received_new_config')
+        except (TimeoutExpired, CalledProcessError):
             self.trigger('halt')
 
     def serving_config_page_received_new_config(self):
-        check_call(['bash', 'stop-ap.sh'])
+        pass
 
     def serving_config_page_halt(self):
         check_call(['bash', 'stop-ap.sh'])
