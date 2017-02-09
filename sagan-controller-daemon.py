@@ -1,3 +1,4 @@
+from codecs import decode
 from random import choice
 import json
 
@@ -202,11 +203,13 @@ class SaganController(StateMachine):
         check_call(['bash', 'stop-ap.sh'])
 
     def serving_config_page(self):
-        server = Popen(['bash', 'serve-config-page.sh'], stdout=PIPE, stderr=None)
+        server = Popen(['bash', 'serve-config-page.sh'], stdout=PIPE, stderr=PIPE)
+        lines = [decode(server.stdout.readline()) for _ in range(4)]
+        if lines[3] != '\n':
+            self.trigger('halt')
+            return
+        print('New config {}'.format(self.config))
         try:
-            out, error = server.communicate()
-            lines = out.decode().split('\n')
-            print('New config {}'.format(self.config))
             self.config['pairing_code'] = lines[0]
             check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
             self.trigger('received_new_config')
