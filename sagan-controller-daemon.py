@@ -245,7 +245,7 @@ class SaganController(StateMachine):
         pass
 
     def pairing(self):
-        self.trigger(choice(list(self.transitions['pairing'].keys())))
+        self.trigger('pairing_success')
 
     def pairing_halt(self):
         pass
@@ -257,7 +257,7 @@ class SaganController(StateMachine):
         pass
 
     def checking_in(self):
-        self.trigger(choice(list(self.transitions['checking_in'].keys())))
+        self.trigger('check_in_success')
 
     def checking_in_check_in_success(self):
         pass
@@ -270,7 +270,7 @@ class SaganController(StateMachine):
 
     def polling_for_work(self):
         try:
-            check_call(['bash', 'run-job-poller.sh'])
+            check_call(['python3', 'job_poller.py', '1'])
         except CalledProcessError as error:
             if error.returncode == 1:
                 self.trigger('network_error')
