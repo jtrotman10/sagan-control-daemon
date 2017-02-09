@@ -227,7 +227,7 @@ class SaganController(StateMachine):
         check_call(['bash', 'stop-ap.sh'])
 
     def attempting_wifi_connection(self):
-        timeout = 2
+        timeout = 20
         try:
             check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
             check_call(['bash', 'check-connection.sh', str(timeout)])
