@@ -19,6 +19,8 @@ _context = {
     'pairing_code': '',
 }
 
+_state = 'awaiting_config'
+
 
 class Handler(SimpleHTTPRequestHandler):
     def render(self, path):
@@ -36,9 +38,22 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(content)
 
     def do_GET(self):
+        global _state
         path = self.path
         if path == '/':
             path = '/index.html'
+
+        if path == '/configuring.html':
+            if _state == 'posted_configuration':
+                _state = 'confirmed'
+            else:
+                self.send_response(303)
+                self.send_header('Location', '/')
+                self.end_headers()
+                return
+
+        if path == '/':
+            _state = 'awaiting_config'
 
         if len(path) > 5 and path[-5:] == '.html':
             self.render(path[1:])
@@ -60,6 +75,9 @@ class Handler(SimpleHTTPRequestHandler):
         print(_context['ssid'])
         print(_context['psk'])
         print('\n')
+
+        global _state
+        _state = 'received_config'
 
 
 def main():

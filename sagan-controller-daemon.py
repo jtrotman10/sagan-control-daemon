@@ -5,7 +5,7 @@ import json
 import sys
 
 from os.path import isfile
-from subprocess import check_call, Popen, CalledProcessError, PIPE
+from subprocess import check_call, Popen, CalledProcessError, PIPE, TimeoutExpired
 
 
 class StateMachine:
@@ -203,14 +203,20 @@ class SaganController(StateMachine):
         check_call(['bash', 'stop-ap.sh'])
 
     def serving_config_page(self):
-        server = Popen(['bash', 'serve-config-page.sh'], stdout=PIPE, stderr=PIPE)
+        server = Popen(['python3', 'server.py', '0.0.0.0', '8000'], stdout=PIPE)
         lines = [decode(server.stdout.readline()) for _ in range(4)]
         if lines[3] != '\n':
             self.trigger('halt')
             return
+        self.config['pairing_code'] = lines[0]
         print('New config {}'.format(self.config))
+        server.terminate()
         try:
-            self.config['pairing_code'] = lines[0]
+            server.wait(10)
+        except TimeoutExpired:
+            self.trigger('halt')
+
+        try:
             check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
             self.trigger('received_new_config')
         except CalledProcessError:
