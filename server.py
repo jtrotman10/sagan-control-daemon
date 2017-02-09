@@ -75,6 +75,7 @@ class Handler(SimpleHTTPRequestHandler):
         print(_context['ssid'])
         print(_context['psk'])
         print('\n')
+        sys.stdout.flush()
 
         global _state
         _state = 'received_config'
