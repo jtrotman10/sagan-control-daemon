@@ -1,7 +1,3 @@
 #!/usr/bin/env bash
 
-echo "ABC"
-echo "123"
-echo "xyz"
-echo
-
+sudo python3 server.py 0.0.0.0 80
