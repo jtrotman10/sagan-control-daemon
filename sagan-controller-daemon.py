@@ -199,7 +199,7 @@ class SaganController(StateMachine):
         pass
 
     def starting_ap_halt(self):
-        pass
+        check_call(['bash', 'stop_ap.sh'])
 
     def serving_config_page(self):
         server = Popen(['bash', 'serve_config_page.sh'], stdout=PIPE, stderr=None)
@@ -214,10 +214,10 @@ class SaganController(StateMachine):
             self.trigger('halt')
 
     def serving_config_page_received_new_config(self):
-        pass
+        check_call(['bash', 'stop_ap.sh'])
 
     def serving_config_page_halt(self):
-        pass
+        check_call(['bash', 'stop_ap.sh'])
 
     def attempting_wifi_connection(self):
         timeout = 2
