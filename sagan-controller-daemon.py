@@ -187,7 +187,7 @@ class SaganController(StateMachine):
 
     def starting_ap(self):
         try:
-            check_call(['bash', './start_ap.sh'])
+            check_call(['bash', './start-ap.sh'])
             self.trigger('ap_started')
         except CalledProcessError:
             self.trigger('halt')
@@ -199,30 +199,30 @@ class SaganController(StateMachine):
         pass
 
     def starting_ap_halt(self):
-        check_call(['bash', 'stop_ap.sh'])
+        check_call(['bash', 'stop-ap.sh'])
 
     def serving_config_page(self):
-        server = Popen(['bash', 'serve_config_page.sh'], stdout=PIPE, stderr=None)
+        server = Popen(['bash', 'serve-config-page.sh'], stdout=PIPE, stderr=None)
         try:
             out, error = server.communicate()
             lines = out.decode().split('\n')
             print('New config {}'.format(self.config))
             self.config['pairing_code'] = lines[0]
-            check_call(['bash', 'add_wifi_network.sh', self.config['ssid'], self.config['psk']])
+            check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
             self.trigger('received_new_config')
         except CalledProcessError:
             self.trigger('halt')
 
     def serving_config_page_received_new_config(self):
-        check_call(['bash', 'stop_ap.sh'])
+        check_call(['bash', 'stop-ap.sh'])
 
     def serving_config_page_halt(self):
-        check_call(['bash', 'stop_ap.sh'])
+        check_call(['bash', 'stop-ap.sh'])
 
     def attempting_wifi_connection(self):
         timeout = 2
         try:
-            check_call(['bash', 'check_connection.sh', str(timeout)])
+            check_call(['bash', 'check-connection.sh', str(timeout)])
             self.trigger('wifi_connection_success')
         except CalledProcessError:
             self.trigger('wifi_connection_failure')
@@ -262,7 +262,7 @@ class SaganController(StateMachine):
 
     def polling_for_work(self):
         try:
-            check_call(['bash', 'run_job_poller.sh'])
+            check_call(['bash', 'run-job-poller.sh'])
         except CalledProcessError as error:
             if error.returncode == 1:
                 self.trigger('network_error')
