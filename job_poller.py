@@ -43,8 +43,7 @@ class Poller:
                 self.heartbeat()
                 self.state_machine[self.state]()
             except ConnectionError as error:
-                print(repr(error))
-                time.sleep(5)
+                exit(1)
 
     def heartbeat(self):
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
