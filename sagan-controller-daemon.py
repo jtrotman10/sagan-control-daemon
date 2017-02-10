@@ -7,6 +7,8 @@ import sys
 from os.path import isfile
 from subprocess import check_call, Popen, CalledProcessError, PIPE, TimeoutExpired
 
+from requests.api import post
+
 
 class StateMachine:
     states = ()
@@ -81,7 +83,6 @@ class SaganController(StateMachine):
         'serving_config_page',
         'attempting_wifi_connection',
         'pairing',
-        'checking_in',
         'polling_for_work',
         'halted'
     ]
@@ -99,9 +100,6 @@ class SaganController(StateMachine):
         'pairing_failure',
         'pairing_success',
         'network_failure',
-        'check_in_success',
-        'check_in_failure',
-        'token_expired'
     ]
 
     transitions = {
@@ -110,7 +108,7 @@ class SaganController(StateMachine):
         },
         'started': {
             'config_invalid': 'starting_ap',
-            'config_valid': 'checking_in',
+            'config_valid': 'polling_for_work',
             'halt': 'halted'
         },
         'starting_ap': {
@@ -128,25 +126,22 @@ class SaganController(StateMachine):
         },
         'pairing': {
             'pairing_failure': 'starting_ap',
-            'pairing_success': 'checking_in',
-            'halt': 'halted'
-        },
-        'checking_in': {
-            'check_in_failure': 'starting_ap',
-            'check_in_success': 'polling_for_work',
+            'pairing_success': 'polling_for_work',
             'halt': 'halted'
         },
         'polling_for_work': {
             'network_failure': 'starting_ap',
-            'token_expired': 'checking_in',
             'halt': 'halted'
         }
     }
 
     initial_config = {
         'pairing_code': '',
+        'device_name': '',
+        'device_id': '',
         'ssid': '',
-        'psk': ''
+        'psk': '',
+        'host': 'http://launchpad.cuberider.com'
     }
 
     def save_config(self):
@@ -161,7 +156,7 @@ class SaganController(StateMachine):
                 self.config.update(json.load(f))
 
     def check_config(self):
-        required_fields = ['pairing_code']
+        required_fields = ['pairing_code', 'device_id']
         return all(self.config.get(field, None) for field in required_fields)
 
     def halted(self):
@@ -203,7 +198,7 @@ class SaganController(StateMachine):
         check_call(['bash', 'stop-ap.sh'])
 
     def serving_config_page(self):
-        server = Popen(['python3', 'server.py', '0.0.0.0', '8000'], stdout=PIPE)
+        server = Popen(['python3', 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
         lines = [decode(server.stdout.readline()) for _ in range(4)]
         if lines[3] != '\n':
             self.trigger('halt')
@@ -245,7 +240,24 @@ class SaganController(StateMachine):
         pass
 
     def pairing(self):
-        self.trigger('pairing_success')
+        try:
+            result = post(
+                '{}/dispatch/devices/'.format(self.config['host']),
+                {
+                    'code': self.config['pairing_code'],
+                    'name': self.config['device_name']
+                }
+            )
+            if result.status_code != 201:
+                self.trigger('pairing_failure')
+            else:
+                device = result.json()
+                self.config['device_id'] = device['id']
+                self.config['device_name'] = device['name']
+                self.save_config()
+                self.trigger('pairing_success')
+        except (KeyError):
+            self.trigger('pairing_failure')
 
     def pairing_halt(self):
         pass
@@ -256,26 +268,12 @@ class SaganController(StateMachine):
     def pairing_pairing_success(self):
         pass
 
-    def checking_in(self):
-        self.trigger('check_in_success')
-
-    def checking_in_check_in_success(self):
-        pass
-
-    def checking_in_check_in_failure(self):
-        pass
-
-    def checking_in_halt(self):
-        pass
-
     def polling_for_work(self):
         try:
-            check_call(['python3', 'job_poller.py', '1'])
+            check_call(['python3', 'job_poller.py', str(self.config['device_id']), self.config['host']])
         except CalledProcessError as error:
             if error.returncode == 1:
                 self.trigger('network_error')
-            elif error.returncode == 2:
-                self.trigger('token_expired')
             else:
                 self.trigger('halt')
 
