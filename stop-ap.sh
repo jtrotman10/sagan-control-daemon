@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+
 sudo ifconfig wlan1 down
 sudo ifconfig wlan0 down
 sudo mv /etc/network/interfaces.ap-backup /etc/network/interfaces 

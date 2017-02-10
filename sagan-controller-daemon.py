@@ -141,7 +141,8 @@ class SaganController(StateMachine):
         'device_id': '',
         'ssid': '',
         'psk': '',
-        'host': 'http://launchpad.cuberider.com'
+        'host': 'http://launchpad.cuberider.com',
+        'interface': 'wlan0'
     }
 
     def save_config(self):
@@ -183,7 +184,7 @@ class SaganController(StateMachine):
 
     def starting_ap(self):
         try:
-            check_call(['bash', './start-ap.sh'])
+            check_call(['bash', './start-ap.sh', self.config['interface']])
             self.trigger('ap_started')
         except CalledProcessError:
             self.trigger('halt')
@@ -224,7 +225,13 @@ class SaganController(StateMachine):
     def attempting_wifi_connection(self):
         timeout = 20
         try:
-            check_call(['bash', 'add-wifi-network.sh', self.config['ssid'], self.config['psk']])
+            check_call([
+                'bash',
+                'add-wifi-network.sh',
+                self.config['ssid'],
+                self.config['psk'],
+                self.config['interface']
+            ])
             check_call(['bash', 'check-connection.sh', str(timeout)])
             self.trigger('wifi_connection_success')
         except CalledProcessError:
