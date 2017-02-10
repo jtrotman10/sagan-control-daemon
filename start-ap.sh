@@ -5,8 +5,7 @@ interface=$1
 
 sudo mv /etc/network/interfaces /etc/network/interfaces.ap-backup
 sudo cp interfaces-disabled /etc/network/interfaces
-sudo ifdown wlan1
-sudo ifdown wlan0
+sudo ifdown $interface
 sudo service hostapd stop
 sudo service udhcpd stop
 sudo service dhcpcd stop
