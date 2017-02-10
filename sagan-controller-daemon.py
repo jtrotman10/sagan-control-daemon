@@ -273,7 +273,7 @@ class SaganController(StateMachine):
             check_call(['python3', 'job_poller.py', str(self.config['device_id']), self.config['host']])
         except CalledProcessError as error:
             if error.returncode == 1:
-                self.trigger('network_error')
+                self.trigger('network_failure')
             else:
                 self.trigger('halt')
 

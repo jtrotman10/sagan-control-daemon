@@ -48,13 +48,15 @@ class Poller:
 
     def heartbeat(self):
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
-        patch(url, {'state': 0 if self.state is 'polling' else 1})
+        response = put(url, {'state': 0 if self.state is 'polling' else 1})
+        if response.status_code not in (200, 204):
+            exit(1)
 
     def check_for_jobs(self):
         url = '{0}/dispatch/devices/{1}/queue'.format(self.host, self.device_id)
         jobs = get(url).json()
         if len(jobs) > 0:
-            next_job = sorted(jobs, key=lambda x: x['time_scheduled'])[0]
+            next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
             self.run_job = next_job['id']
             experiment = self.get_experiment(next_job['experiment'])
@@ -125,9 +127,9 @@ class Poller:
         return self.experiment_process.poll() is None
 
     def start_experiment(self, experiment):
-        print('Starting experiment "{}".'.format(experiment['name']))
+        print('Starting experiment "{}".'.format(experiment['title']))
         self.experiment_process = Popen(
-            [sys.executable, '-c', experiment['text']],
+            [sys.executable, '-c', experiment['code_string']],
             stdin=PIPE,
             stdout=PIPE,
             stderr=PIPE,
