@@ -1,14 +1,36 @@
 import sys
 
 import time
+from codecs import decode
+
+import os
 from requests import get, patch, put
-from datetime import datetime
-
+from threading import Thread
 from subprocess import Popen, PIPE, TimeoutExpired
-
 from requests.exceptions import ConnectionError
+import websocket
+from queue import Queue, Empty
+
+from websocket._exceptions import WebSocketConnectionClosedException
 
 _current_poller = None
+
+
+def websocket_recv(ws: websocket.WebSocket, in_queue: Queue):
+    while ws.connected:
+        try:
+            message = ws.recv()
+            in_queue.put(message)
+        except WebSocketConnectionClosedException:
+            break
+
+
+def process_read(out_stream, out_queue: Queue):
+    while True:
+        data = os.read(out_stream.fileno(), 512)
+        if data == b'':
+            break
+        out_queue.put(decode(data))
 
 
 def main():
@@ -22,7 +44,7 @@ class Poller:
         self.device_id = device_id
         self.host = host
         self.run_job = None
-        self.experiment_process = None
+        self.experiment_process = None  # type: Popen
         self.results_stream = None
         self.error_stream = None
         self.stdout_text = b''
@@ -43,6 +65,7 @@ class Poller:
                 self.heartbeat()
                 self.state_machine[self.state]()
             except ConnectionError as error:
+                print(error)
                 exit(1)
 
     def heartbeat(self):
@@ -70,17 +93,98 @@ class Poller:
         url = '{0}/dispatch/experiments/{1}'.format(self.host, experiment_id)
         return get(url).json()
 
+    def get_state(self):
+        url = '{0}/dispatch/jobs/{1}'.format(self.host, self.run_job)
+        return get(url).json()['state']
+
+    def notify_start(self):
+        return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
+
+    def post_results(self):
+        return put(
+            '{0}/dispatch/jobs/{1}/finish'.format(self.host, self.run_job),
+            {
+                'out': self.stdout_text,
+                'error': self.stderr_text
+            }
+        )
+
+    def start_experiment(self, experiment):
+        print('Starting experiment "{}".'.format(experiment['title']))
+        with open('file.py', 'w') as f:
+            f.write(experiment['code_string'])
+
+        self.experiment_process = Popen(
+            [sys.executable, '-u', 'file.py'],
+            stdin=PIPE,
+            stdout=PIPE,
+            # stderr=PIPE,
+            bufsize=0
+
+        )
+        self.results_stream = self.experiment_process.stdout
+        self.error_stream = self.experiment_process.stderr
+        self.out_queue = Queue()
+        self.experiment_read_thread = Thread(target=process_read, args=(self.experiment_process.stdout, self.out_queue))
+        self.experiment_read_thread.start()
+        self.open_websocket('ws://echo.websocket.org/')
+
+    def read_output(self):
+        output = ''
+        while True:
+            try:
+                output += self.out_queue.get_nowait()
+            except Empty:
+                break
+        return output
+
+    def is_experiment_running(self):
+        return self.experiment_process.poll() is None
+
+    def end_experiment(self):
+        print('Job finished, awaiting work.')
+        self.results_stream = None
+        self.error_stream = None
+        self.experiment_process = None
+        self.stderr_text = b''
+        self.stdout_text = b''
+
+    def open_websocket(self, url):
+        self.websocket = websocket.WebSocket()
+        self.websocket.connect(url)
+        self.in_queue = Queue()
+        self.websocket_recv_thread = Thread(target=websocket_recv, args=(self.websocket, self.in_queue))
+        self.websocket_recv_thread.start()
+
+    def close_websocket(self):
+        self.websocket.close()
+        self.websocket_recv_thread.join()
+
+    def read_input(self):
+        input = ''
+        while True:
+            try:
+                input += self.in_queue.get_nowait()
+            except Empty:
+                break
+        return input
+
     def run_experiment(self):
+        input = self.read_input()
         try:
-            self.communicate(timeout=1)
-        except TimeoutExpired:
+            self.experiment_process.stdin.write(input.encode())
+        except BrokenPipeError:
             pass
-
-        if self.get_state() == 2:
-            self.state = 'termination_requested'
-
+        output = self.read_output()
+        if output != '':
+            self.websocket.send(output)
+            sys.stdout.write(output)
         if not self.is_experiment_running():
-            # Experiment has stopped
+            self.experiment_read_thread.join()
+            output = self.read_output()
+            self.websocket.send(output)
+            self.websocket.close()
+            self.websocket_recv_thread.join()
             self.post_results()
             self.end_experiment()
             self.state = 'polling'
@@ -101,49 +205,6 @@ class Poller:
         self.end_experiment()
         self.state = 'polling'
 
-    def get_state(self):
-        url = '{0}/dispatch/jobs/{1}'.format(self.host, self.run_job)
-        return get(url).json()['state']
-
-    def notify_start(self):
-        return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
-
-    def post_results(self):
-        return put(
-            '{0}/dispatch/jobs/{1}/finish'.format(self.host, self.run_job),
-            {
-                'out': self.stdout_text,
-                'error': self.stderr_text
-            }
-        )
-
-    def communicate(self, **kwargs):
-        out, err = self.experiment_process.communicate(**kwargs)
-        self.stdout_text += out
-        self.stderr_text += err
-
-    def is_experiment_running(self):
-        return self.experiment_process.poll() is None
-
-    def start_experiment(self, experiment):
-        print('Starting experiment "{}".'.format(experiment['title']))
-        self.experiment_process = Popen(
-            [sys.executable, '-c', experiment['code_string']],
-            stdin=PIPE,
-            stdout=PIPE,
-            stderr=PIPE,
-            bufsize=1
-        )
-        self.results_stream = self.experiment_process.stdout
-        self.error_stream = self.experiment_process.stderr
-
-    def end_experiment(self):
-        print('Job finished, awaiting work.')
-        self.results_stream = None
-        self.error_stream = None
-        self.experiment_process = None
-        self.stderr_text = b''
-        self.stdout_text = b''
 
 if __name__ == '__main__':
     main()
