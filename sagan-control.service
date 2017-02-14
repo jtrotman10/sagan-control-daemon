@@ -1,0 +1,6 @@
+[Unit]
+Descption=Sagan remote experiment scheduler
+After=network.target
+
+[Service]
+ExecStart=/home/pi/Documents/cuberider/sagandeployment/run-controller

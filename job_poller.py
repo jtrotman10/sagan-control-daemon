@@ -101,7 +101,11 @@ class Poller:
             except ConnectionError as error:
                 print(error)
                 exit(1)
+            except KeyboardInterrupt:
+                self.state = 'exit'
 
+        if self.experiment_process:
+            self.kill_subproc()
         stop_event.set()
         heart_beat_thread.join()
 
@@ -182,10 +186,8 @@ class Poller:
             self.post_results()
         except:
             pass
-        print('Job finished, awaiting work.')
+        print('Job finished.')
         self.experiment_process = None
-        self.stderr_text = b''
-        self.stdout_text = b''
 
     def close_websocket(self):
         self.websocket.close()
