@@ -3,4 +3,4 @@ Descption=Sagan remote experiment scheduler
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/sagan-control-daemon/sagan-control-daemon.py c
+ExecStart=/opt/sagan-control-daemon/env/bin/python /opt/sagan-control-daemon/sagan-control-daemon.py c
