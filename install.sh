@@ -11,3 +11,5 @@ sudo cp init.d_hostapd /etc/init.d/hostapd
 sudo cp udhcpd.conf /etc/
 sudo cp default_udhcpd /etc/default/udhcpd
 sudo cp sagan-control.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl start sagan-control
