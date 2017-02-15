@@ -184,7 +184,7 @@ class SaganController(StateMachine):
 
     def starting_ap(self):
         try:
-            check_call(['bash', './start-ap.sh', self.config['interface']])
+            check_call(['bash', './start-ap.sh', self.config['interface']], shell=True)
             self.trigger('ap_started')
         except CalledProcessError:
             self.trigger('halt')
@@ -196,10 +196,10 @@ class SaganController(StateMachine):
         pass
 
     def starting_ap_halt(self):
-        check_call(['bash', 'stop-ap.sh', self.config['interface']])
+        check_call(['bash', 'stop-ap.sh', self.config['interface']], shell=True)
 
     def serving_config_page(self):
-        server = Popen(['python3', 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
+        server = Popen([sys.executable, 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
         lines = [decode(server.stdout.readline()) for _ in range(4)]
         if lines[3] != '\n':
             self.trigger('halt')
@@ -211,7 +211,7 @@ class SaganController(StateMachine):
         server.terminate()
         try:
             server.wait(10)
-            check_call(['bash', 'stop-ap.sh', self.config['interface']])
+            check_call(['bash', 'stop-ap.sh', self.config['interface']], shell=True)
             self.trigger('received_new_config')
         except (TimeoutExpired, CalledProcessError):
             self.trigger('halt')
@@ -220,7 +220,7 @@ class SaganController(StateMachine):
         pass
 
     def serving_config_page_halt(self):
-        check_call(['bash', 'stop-ap.sh', self.config['interface']])
+        check_call(['bash', 'stop-ap.sh', self.config['interface']], shell=True)
 
     def attempting_wifi_connection(self):
         timeout = 20
@@ -231,8 +231,10 @@ class SaganController(StateMachine):
                 self.config['ssid'],
                 self.config['psk'],
                 self.config['interface']
-            ])
-            check_call(['bash', 'check-connection.sh', str(timeout)])
+            ],
+                shell=True
+            )
+            check_call(['bash', 'check-connection.sh', str(timeout)], shell=True)
             self.trigger('wifi_connection_success')
         except CalledProcessError:
             self.trigger('wifi_connection_failure')
@@ -277,7 +279,7 @@ class SaganController(StateMachine):
 
     def polling_for_work(self):
         try:
-            check_call(['python3', 'job_poller.py', str(self.config['device_id']), self.config['host']])
+            check_call([sys.executable, 'job_poller.py', str(self.config['device_id']), self.config['host']])
         except CalledProcessError as error:
             if error.returncode == 1:
                 self.trigger('network_failure')
