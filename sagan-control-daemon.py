@@ -200,13 +200,14 @@ class SaganController(StateMachine):
 
     def serving_config_page(self):
         server = Popen([sys.executable, 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
-        lines = [decode(server.stdout.readline()) for _ in range(4)]
-        if lines[3] != '\n':
+        lines = [decode(server.stdout.readline()) for _ in range(5)]
+        if lines[4] != '\n':
             self.trigger('halt')
             return
         self.config['pairing_code'] = lines[0].strip()
         self.config['ssid'] = lines[1].strip()
         self.config['psk'] = lines[2].strip()
+        self.config['device_name'] = lines[3].strip()
         print('New config {}'.format(self.config))
         server.terminate()
         try:

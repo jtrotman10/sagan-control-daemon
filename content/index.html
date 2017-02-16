@@ -2,22 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cuberider - Sagan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cuberider | Sagan</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" crossorigin="anonymous">
+
+    <script src="jquery-1.12.4.min.js"
+            crossorigin="anonymous"></script>
+
+    <script src="bootstrap/js/bootstrap.min.js"
+            crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="index.css">
 </head>
 <body>
-<h1>
-    Set up your Sagan!
-</h1>
-<form method="post" action='/' enctype="application/x-www-form-urlencoded">
-    <label for="code-input">Pairing code</label>
-    <input id="code-input" name="pairing_code"/>
-    <label for="ssid-input">Wifi Name (SSID)</label>
-    <input id="ssid-input" name="ssid"/>
-    <label for="psk-input">Password</label>
-    <input id="psk-input" name="psk"/>
-    <label for="submit">Submit</label>
-    <button id="submit">Save</button>
-</form>
+<div class="container">
+    <div class="row main-panel">
+        <div class="col-sm-12">
+            <h3>
+                Set up your Sagan!
+            </h3>
+            <form class="form" method="post" action='/' enctype="application/x-www-form-urlencoded">
+                <div class="form-group">
+                    <label for="code-input">Pairing code</label>
+                    <input class="form-control" id="code-input" name="pairing_code" value="{pairing_code}"/>
+                </div>
+                <div class="form-group">
+                    <label for="ssid-input">Wifi Name (SSID)</label>
+                    <input class="form-control" id="ssid-input" name="ssid" value="{ssid}"/>
+                </div>
+                <div class="form-group">
+                    <label for="psk-input">Wifi Password</label>
+                    <input class="form-control" id="psk-input" name="psk" value="{psk}"/>
+                </div>
+                <div class="form-group">
+                    <label for="name-input">Name (Optional, but you can pick one!)</label>
+                    <input class="form-control" id="name-input" name="name" value="{name}"/>
+                </div>
+                <div class="form-group">
+                    <button class="form-control btn btn-primary" id="submit">Save</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
 </body>
 </html>

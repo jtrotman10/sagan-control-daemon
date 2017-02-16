@@ -17,9 +17,8 @@ _context = {
     'ssid': '',
     'psk': '',
     'pairing_code': '',
+    'name': ''
 }
-
-_state = 'awaiting_config'
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -38,22 +37,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(content)
 
     def do_GET(self):
-        global _state
         path = self.path
         if path == '/':
             path = '/index.html'
-
-        if path == '/configuring.html':
-            if _state == 'posted_configuration':
-                _state = 'confirmed'
-            else:
-                self.send_response(303)
-                self.send_header('Location', '/')
-                self.end_headers()
-                return
-
-        if path == '/':
-            _state = 'awaiting_config'
 
         if len(path) > 5 and path[-5:] == '.html':
             self.render(path[1:])
@@ -61,24 +47,20 @@ class Handler(SimpleHTTPRequestHandler):
             super(Handler, self).do_GET()
 
     def do_POST(self):
-        global _context
         content_length = self.headers.get('content-length', '0')
         post_body = self.rfile.read(int(content_length))
         config_values = parse_qs(post_body)
         _context.update({decode(k): decode(v[0]) for k, v in config_values.items()})
 
-        self.send_response(303)
-        self.send_header('Location', '/configuring.html')
-        self.end_headers()
+        self.path = '/configuring.html'
+        self.do_GET()
 
         print(_context['pairing_code'])
         print(_context['ssid'])
         print(_context['psk'])
-        print('\n')
+        print(_context['name'])
+        print('')
         sys.stdout.flush()
-
-        global _state
-        _state = 'received_config'
 
 
 def main():

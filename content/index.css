@@ -1,3 +1,21 @@
+body {
+    background: url('./login-background.jpg') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    color: white;
+}
+
 label {
     display: block;
+}
+
+.main-panel {
+    padding: 10px;
+    border: 2px solid #f36f2e;
+    border-radius: 5px;
+    margin: 10px;
+    background: rgba(27, 42, 81, 0.3);
+    color: white;
 }
