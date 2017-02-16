@@ -163,18 +163,17 @@ class Poller:
 
         )
 
-    def open_websocket(self, url):
-        self.websocket = websocket.WebSocket()
-        self.websocket.connect(url)
-
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
-        self.open_websocket('ws://echo.websocket.org')
+        self.websocket_in = websocket.WebSocket()
+        self.websocket_in.connect('ws://echo.websocket.org')
+        self.websocket_out = websocket.WebSocket()
+        self.websocket_out.connect('ws://echo.websocket.org')
         self.start_experiment_proc(experiment)
-        self.in_thread = Thread(target=websocket_recv, args=(self.websocket, self.experiment_process.stdin))
+        self.in_thread = Thread(target=websocket_recv, args=(self.websocket_in, self.experiment_process.stdin))
         self.out_log = BytesIO()
         self.out_thread = Thread(target=process_read,
-                                 args=(self.experiment_process.stdout, self.websocket, self.out_log))
+                                 args=(self.experiment_process.stdout, self.websocket_out, self.out_log))
         self.in_thread.start()
         self.out_thread.start()
 
