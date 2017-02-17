@@ -3,7 +3,10 @@
 set -e
 sudo apt-get -y install hostapd udhcpd
 sudo pip3 install virtualenv
-virtualenv -p python3 env
+# check there is a readable file called env/bin/activate
+if [ ! -r env/bin/activate ]; then
+    virtualenv -p python3 env
+fi
 . env/bin/activate
 pip install -r requirements.txt
 sudo mkdir sandbox
