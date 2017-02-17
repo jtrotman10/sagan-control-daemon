@@ -149,7 +149,7 @@ class SaganController(StateMachine):
 
     def save_config(self):
         with open(self.config_file_path, 'w') as f:
-            json.dump(self.config, f)
+            json.dump(self.config, f, indent=4)
 
     def load_config(self):
         if not isfile(self.config_file_path):
