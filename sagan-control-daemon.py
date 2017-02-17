@@ -243,7 +243,7 @@ class SaganController(StateMachine):
             self.trigger('wifi_connection_failure')
 
     def attempting_wifi_connection_wifi_connection_success(self):
-        pass
+        self.save_config()
 
     def attempting_wifi_connection_wifi_connection_failure(self):
         pass
