@@ -5,3 +5,6 @@ After=network.target
 [Service]
 WorkingDirectory=/opt/sagan-control-daemon/
 ExecStart=/opt/sagan-control-daemon/env/bin/python /opt/sagan-control-daemon/sagan-control-daemon.py config.json
+
+[Install]
+WantedBy=multi-user.target
