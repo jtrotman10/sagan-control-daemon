@@ -123,6 +123,8 @@ class Poller:
             next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
             self.run_job = next_job['id']
+            self.in_socket_url = next_job['insocket']
+            self.out_socket_url = next_job['outsocket']
             experiment = self.get_experiment(next_job['experiment'])
             self.start_experiment(experiment)
             self.notify_start()
@@ -167,9 +169,9 @@ class Poller:
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
         self.websocket_in = websocket.WebSocket()
-        self.websocket_in.connect('ws://echo.websocket.org')
+        self.websocket_in.connect(self.in_socket_url)
         self.websocket_out = websocket.WebSocket()
-        self.websocket_out.connect('ws://echo.websocket.org')
+        self.websocket_out.connect(self.out_socket_url)
         self.start_experiment_proc(experiment)
         self.in_thread = Thread(target=websocket_recv, args=(self.websocket_in, self.experiment_process.stdin))
         self.out_log = BytesIO()
