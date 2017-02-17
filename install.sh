@@ -14,6 +14,7 @@ pip install -r requirements.txt
 
 if [ ! -d sandbox ]; then
     sudo mkdir sandbox
+    sudo chown pi:pi sandbox
 fi
 sudo cp hostapd.conf /etc/hostapd/
 sudo cp init.d_hostapd /etc/init.d/hostapd
