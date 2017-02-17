@@ -283,7 +283,7 @@ class SaganController(StateMachine):
     def polling_for_work(self):
         try:
             check_call([
-                '/usr/bin/sudo/',
+                '/usr/bin/sudo',
                 '-u',
                 self.config['user'],
                 sys.executable,
