@@ -3,6 +3,7 @@ from random import choice
 import json
 
 import sys
+import os
 
 from os.path import isfile
 from subprocess import check_call, Popen, CalledProcessError, PIPE, TimeoutExpired
@@ -142,7 +143,8 @@ class SaganController(StateMachine):
         'ssid': '',
         'psk': '',
         'host': 'http://launchpad.cuberider.com',
-        'interface': 'wlan0'
+        'interface': 'wlan0',
+        'user': 'pi'
     }
 
     def save_config(self):
@@ -280,7 +282,16 @@ class SaganController(StateMachine):
 
     def polling_for_work(self):
         try:
-            check_call([sys.executable, 'job_poller.py', str(self.config['device_id']), self.config['host']])
+            check_call([
+                '/usr/bin/sudo/',
+                '-u',
+                self.config['user'],
+                sys.executable,
+                'job_poller.py',
+                str(self.config['device_id']),
+                self.config['host'],
+                os.path.join(os.curdir, 'sandbox')
+            ])
         except CalledProcessError as error:
             if error.returncode == 1:
                 self.trigger('network_failure')

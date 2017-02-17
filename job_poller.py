@@ -67,6 +67,7 @@ def heart_beat(url, heart_beat_time, stop_trigger: Event):
 
 def main():
     global _current_poller
+    os.curdir = sys.argv[3]
     _current_poller = Poller(int(sys.argv[1]), sys.argv[2])
     _current_poller.go()
 
@@ -179,17 +180,15 @@ class Poller:
 
     def end_experiment(self):
         try:
-            self.close_websocket()
+            self.websocket_in.close()
             self.in_thread.join()
             self.out_thread.join()
+            self.websocket_out.close()
             self.post_results()
         except:
             pass
         print('Job finished.')
         self.experiment_process = None
-
-    def close_websocket(self):
-        self.websocket.close()
 
     def run_experiment(self):
         try:

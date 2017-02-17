@@ -6,6 +6,7 @@ sudo pip3 install virtualenv
 virtualenv -p python3 env
 . env/bin/activate
 pip install -r requirements.txt
+sudo mkdir sandbox
 sudo cp hostapd.conf /etc/hostapd/
 sudo cp init.d_hostapd /etc/init.d/hostapd
 sudo cp udhcpd.conf /etc/
