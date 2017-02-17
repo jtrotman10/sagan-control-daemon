@@ -1,5 +1,5 @@
 [Unit]
-Descption=Sagan remote experiment scheduler
+Description=Sagan remote experiment scheduler
 After=network.target
 
 [Service]
