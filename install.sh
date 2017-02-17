@@ -2,6 +2,8 @@
 
 set -e
 sudo apt-get -y install hostapd udhcpd
+
+# Set up virtual environment
 sudo pip3 install virtualenv
 # check there is a readable file called env/bin/activate
 if [ ! -r env/bin/activate ]; then
@@ -9,7 +11,10 @@ if [ ! -r env/bin/activate ]; then
 fi
 . env/bin/activate
 pip install -r requirements.txt
-sudo mkdir sandbox
+
+if [ ! -d sandbox ]; then
+    sudo mkdir sandbox
+fi
 sudo cp hostapd.conf /etc/hostapd/
 sudo cp init.d_hostapd /etc/init.d/hostapd
 sudo cp udhcpd.conf /etc/
