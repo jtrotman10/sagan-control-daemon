@@ -67,7 +67,7 @@ def heart_beat(url, heart_beat_time, stop_trigger: Event):
 
 def main():
     global _current_poller
-    os.curdir = sys.argv[3]
+    os.chdir(sys.argv[3])
     _current_poller = Poller(int(sys.argv[1]), sys.argv[2])
     _current_poller.go()
 
