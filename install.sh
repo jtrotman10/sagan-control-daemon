@@ -19,6 +19,7 @@ fi
 
 if [ ! -e leds ]; then
     sudo mkfifo leds
+    sudo chown pi:pi leds
 fi
 
 sudo cp rc_local.txt /etc/rc.local
