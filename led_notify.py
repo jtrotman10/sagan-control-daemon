@@ -25,9 +25,9 @@ class Notifier:
         GPIO.setup(24, GPIO.OUT)
         GPIO.setup(25, GPIO.OUT)
 
-        self.r = GPIO.PWM(23, 1000)  # channel=24 frequency=50Hz
-        self.g = GPIO.PWM(24, 1000)  # channel=24 frequency=50Hz
-        self.b = GPIO.PWM(25, 1000)  # channel=24 frequency=50Hz
+        self.r = GPIO.PWM(25, 1000)  # channel=24 frequency=50Hz
+        self.g = GPIO.PWM(23, 1000)  # channel=24 frequency=50Hz
+        self.b = GPIO.PWM(24, 1000)  # channel=24 frequency=50Hz
         self.r.start(100)
         self.g.start(100)
         self.b.start(100)
@@ -74,8 +74,8 @@ class Notifier:
             if pattern:
                 params = self.pattern_params[pattern]
                 self.r.ChangeDutyCycle(int(cos((params[0][0] * i + params[0][1] * period) * pi / period) * 50) + 50)
-                self.r.ChangeDutyCycle(int(cos((params[1][0] * i + params[1][1] * period) * pi / period) * 50) + 50)
-                self.r.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * pi / period) * 50) + 50)
+                self.g.ChangeDutyCycle(int(cos((params[1][0] * i + params[1][1] * period) * pi / period) * 50) + 50)
+                self.b.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * pi / period) * 50) + 50)
             i += 1
 
     def run(self):
