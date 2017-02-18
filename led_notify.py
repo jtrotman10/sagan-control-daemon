@@ -8,7 +8,7 @@ import sys
 
 
 class Notifier:
-    def __init__(self):
+    def __init__(self, cmd_file=None):
         self.r = None
         self.g = None
         self.b = None
@@ -35,6 +35,7 @@ class Notifier:
             'n',
             'x'
         }
+        self.cmd_file = cmd_file or sys.stdin
 
     def init(self):
         led1_pin = 27
@@ -115,7 +116,10 @@ class Notifier:
 
 
 def main():
-    notifier = Notifier()
+    file = None
+    if len(sys.argv) > 1:
+        file = open(sys.argv[1])
+    notifier = Notifier(file)
     notifier.run()
 
 

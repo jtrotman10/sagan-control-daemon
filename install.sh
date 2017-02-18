@@ -16,6 +16,11 @@ if [ ! -d sandbox ]; then
     sudo mkdir sandbox
     sudo chown pi:pi sandbox
 fi
+
+if [ ! -e notify ]; then
+    sudo mkfifo leds
+fi
+
 sudo cp rc_local.txt /etc/rc.local
 sudo chmod +x /etc/rc.local
 sudo chmod +x run.sh
