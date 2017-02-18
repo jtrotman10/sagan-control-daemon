@@ -77,7 +77,6 @@ class SaganController(StateMachine):
         super().__init__()
         self.config_file_path = config_file_path
         self.config = self.initial_config.copy()
-        self.notifier = Popen([sys.executable, 'led_notify.py', 'leds'])
         self.leds_file = open('leds', 'w')
 
     states = [
