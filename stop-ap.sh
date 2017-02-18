@@ -3,8 +3,8 @@ set -e
 
 interface=$1
 
-sudo ifconfig $interface down
+sudo ifconfig ${interface} 0.0.0.0
 sudo service udhcpd stop
 sudo service hostapd stop
 sudo service dhcpcd start
-sudo ifup $interface
+sudo ifup ${interface}
