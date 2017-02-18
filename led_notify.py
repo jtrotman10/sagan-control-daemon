@@ -82,4 +82,9 @@ class Notifier:
 
 
 def main():
-    pass
+    notifier = Notifier()
+    notifier.run()
+
+
+if __name__ == '__main__':
+    main()
