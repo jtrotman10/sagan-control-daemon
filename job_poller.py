@@ -4,12 +4,14 @@ import time
 from codecs import decode
 
 import os
+from glob import glob
 from io import BytesIO
 from time import sleep
 
-from requests import get, put
+from requests import get, put, post
 from threading import Thread, Event
-from subprocess import Popen, PIPE, TimeoutExpired
+from subprocess import Popen, PIPE, TimeoutExpired, check_call
+
 from requests.exceptions import ConnectionError
 import websocket
 
@@ -123,8 +125,8 @@ class Poller:
             next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
             self.run_job = next_job['id']
-            self.in_socket_url = next_job['insocket']
-            self.out_socket_url = next_job['outsocket']
+            self.in_socket_url = 'ws://echo.websocket.org'  # next_job['insocket']
+            self.out_socket_url = 'ws://echo.websocket.org'  # next_job['outsocket']
             experiment = self.get_experiment(next_job['experiment'])
             self.start_experiment(experiment)
             self.notify_start()
@@ -145,20 +147,30 @@ class Poller:
         return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
 
     def post_results(self):
+        check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
+        result = post(
+            '{0}/api/files/'.format(self.host),
+            files={
+                'file': ('results.zip', open('results.zip', 'rb')),
+                'description': ('', 'Experiment results for job {}'.format(self.run_job))
+            }
+        )
+        assert result.status_code == 201
         return put(
             '{0}/dispatch/jobs/{1}/finish'.format(self.host, self.run_job),
             {
                 'out': self.out_log.getvalue(),
-                'error': self.stderr_text
+                'error': self.stderr_text,
+                'results': result.json()['id']
             }
         )
 
     def start_experiment_proc(self, experiment):
-        with open('file.py', 'w') as f:
+        with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
         self.experiment_process = Popen(
-            [sys.executable, '-u', 'file.py'],
+            [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
             stdout=PIPE,
             # stderr=PIPE,
@@ -168,6 +180,7 @@ class Poller:
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
+        check_call(['/bin/bash', '-c', 'rm -r *'])
         self.websocket_in = websocket.WebSocket()
         self.websocket_in.connect(self.in_socket_url)
         self.websocket_out = websocket.WebSocket()
@@ -191,6 +204,7 @@ class Poller:
             pass
         print('Job finished.')
         self.experiment_process = None
+        check_call(['/bin/bash', '-c', 'rm -r *'])
 
     def run_experiment(self):
         try:

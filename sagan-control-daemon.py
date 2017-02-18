@@ -235,9 +235,7 @@ class SaganController(StateMachine):
                 self.config['ssid'],
                 self.config['psk'],
                 self.config['interface']
-            ],
-                shell=True
-            )
+            ])
             check_call(['/bin/bash', 'check-connection.sh', str(timeout)])
             self.trigger('wifi_connection_success')
         except CalledProcessError:
