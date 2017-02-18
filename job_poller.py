@@ -199,14 +199,11 @@ class Poller:
         self.out_thread.start()
 
     def end_experiment(self):
-        try:
-            self.websocket_in.close()
-            self.in_thread.join()
-            self.out_thread.join()
-            self.websocket_out.close()
-            self.post_results()
-        except:
-            pass
+        self.websocket_in.close()
+        self.in_thread.join()
+        self.out_thread.join()
+        self.websocket_out.close()
+        self.post_results()
         print('Job finished.')
         self.experiment_process = None
         self.clean_sandbox()
@@ -214,12 +211,13 @@ class Poller:
     def run_experiment(self):
         try:
             self.experiment_process.wait(1)
-            self.end_experiment()
-            self.state = 'polling'
         except TimeoutExpired:
             state = self.get_state()
             if state == 2:
                 self.kill_subproc()
+        else:
+            self.end_experiment()
+            self.state = 'polling'
 
     def kill_subproc(self):
         print('Terminating job.')
