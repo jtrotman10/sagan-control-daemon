@@ -69,7 +69,7 @@ class Notifier:
     def read_commands(self):
         try:
             while True:
-                cmd = sys.stdin.readline().strip()
+                cmd = self.cmd_file.readline().strip()
                 if cmd not in self.cmds:
                     continue
                 self.queue.put(cmd)
