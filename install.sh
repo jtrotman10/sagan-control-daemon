@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-sudo apt-get -y install hostapd udhcpd
+sudo apt-get -y install hostapd udhcpd zip
 
 # Set up virtual environment
 sudo pip3 install virtualenv
