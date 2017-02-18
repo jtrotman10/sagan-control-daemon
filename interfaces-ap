@@ -12,8 +12,9 @@ iface lo inet loopback
 iface eth0 inet manual
 
 allow-hotplug wlan0
-iface wlan0 inet manual
-   wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+iface wlan0 inet statuc
+  address 192.168.42.1
+  netmask 255.255.255.0
 
 
 allow-hotplug wlan1

@@ -153,6 +153,7 @@ class SaganController(StateMachine):
 
     def load_config(self):
         if not isfile(self.config_file_path):
+            # This writes a default config file containing initial_config
             self.save_config()
         else:
             with open(self.config_file_path, 'r') as f:
