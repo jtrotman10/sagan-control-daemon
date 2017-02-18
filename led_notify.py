@@ -4,6 +4,8 @@ from math import cos, pi
 from threading import Thread
 from queue import Queue, Empty
 
+import sys
+
 
 class Notifier:
     def __init__(self):
@@ -66,7 +68,7 @@ class Notifier:
     def read_commands(self):
         try:
             while True:
-                cmd = input()
+                cmd = sys.stdin.readline().strip()
                 if cmd not in self.cmds:
                     continue
                 self.queue.put(cmd)
