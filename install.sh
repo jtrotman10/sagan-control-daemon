@@ -18,6 +18,7 @@ if [ ! -d sandbox ]; then
 fi
 sudo cp rc_local.txt /etc/rc.local
 sudo chmod +x /etc/rc.local
+sudo chmod +x run.sh
 sudo cp hostapd.conf /etc/hostapd/
 sudo cp init.d_hostapd /etc/init.d/hostapd
 sudo cp udhcpd.conf /etc/
