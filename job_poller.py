@@ -165,6 +165,11 @@ class Poller:
             }
         )
 
+    def clean_sandbox(self):
+        files = os.listdir(path='.')
+        if files:
+            check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
+
     def start_experiment_proc(self, experiment):
         with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
@@ -180,7 +185,7 @@ class Poller:
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
-        check_call(['/bin/bash', '-c', 'rm -r *'])
+        self.clean_sandbox()
         self.websocket_in = websocket.WebSocket()
         self.websocket_in.connect(self.in_socket_url)
         self.websocket_out = websocket.WebSocket()
@@ -204,7 +209,7 @@ class Poller:
             pass
         print('Job finished.')
         self.experiment_process = None
-        check_call(['/bin/bash', '-c', 'rm -r *'])
+        self.clean_sandbox()
 
     def run_experiment(self):
         try:
