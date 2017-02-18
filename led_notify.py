@@ -57,11 +57,13 @@ class Notifier:
                 cmd = None
             if cmd:
                 if cmd == 'x':
-                    self.teardown()
+                    if pattern:
+                        self.teardown()
                     break
                 if cmd == 'n':
-                    self.teardown()
-                    pattern = None
+                    if pattern:
+                        self.teardown()
+                        pattern = None
                 else:
                     if not pattern:
                         self.init()
