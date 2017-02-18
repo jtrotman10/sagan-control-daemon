@@ -43,6 +43,8 @@ class Notifier:
             while True:
                 cmd = input()
                 self.queue.put(cmd)
+                if cmd == 'x':
+                    break
         except KeyboardInterrupt:
             self.queue.put('x')
 
