@@ -67,15 +67,8 @@ def heart_beat(url, heart_beat_time, stop_trigger: Event):
         sleep(heart_beat_time)
 
 
-def main():
-    global _current_poller
-    os.chdir(sys.argv[3])
-    _current_poller = Poller(int(sys.argv[1]), sys.argv[2])
-    _current_poller.go()
-
-
 class Poller:
-    def __init__(self, device_id, host):
+    def __init__(self, device_id, host, leds=None):
         self.device_id = device_id
         self.host = host
         self.run_job = None
@@ -90,11 +83,19 @@ class Poller:
             'running': self.run_experiment,
             'termination_requested': self.kill_subproc
         }
+        self.leds_file = leds
+        if not leds:
+            self.leds_file = open('/dev/null', 'w')
+
+    def set_leds(self, cmd):
+        self.leds_file.write(cmd + '\n')
+        self.leds_file.flush()
 
     def go(self):
         print('Device id: {}'.format(self.device_id))
         print('Awaiting work.')
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
+        self.set_leds('g')
         stop_event = Event()
         heart_beat_thread = Thread(target=heart_beat, args=(url, 5, stop_event))
         heart_beat_thread.start()
@@ -147,6 +148,7 @@ class Poller:
         return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
 
     def post_results(self):
+        self.set_leds('~')
         check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
         result = post(
             '{0}/api/files/'.format(self.host),
@@ -185,6 +187,7 @@ class Poller:
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
+        self.set_leds('n')
         self.clean_sandbox()
         self.websocket_in = websocket.WebSocket()
         self.websocket_in.connect(self.in_socket_url)
@@ -204,9 +207,10 @@ class Poller:
         self.out_thread.join()
         self.websocket_out.close()
         self.post_results()
-        print('Job finished.')
         self.experiment_process = None
         self.clean_sandbox()
+        self.set_leds('g')
+        print('Job finished.')
 
     def run_experiment(self):
         try:
@@ -234,6 +238,16 @@ class Poller:
         self.post_results()
         self.end_experiment()
         self.state = 'polling'
+
+
+def main():
+    global _current_poller
+    leds = None
+    if len(sys.argv) > 4:
+        leds = open(sys.argv[4], 'w')
+    os.chdir(sys.argv[3])
+    _current_poller = Poller(int(sys.argv[1]), sys.argv[2], leds)
+    _current_poller.go()
 
 
 if __name__ == '__main__':

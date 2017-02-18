@@ -77,7 +77,8 @@ class SaganController(StateMachine):
         super().__init__()
         self.config_file_path = config_file_path
         self.config = self.initial_config.copy()
-        self.notifier = Popen([sys.executable, 'led_notifier.py'])
+        self.notifier = Popen([sys.executable, 'led_notifier.py', 'leds'])
+        self.leds_file = open('leds', 'w')
 
     states = [
         'started',
@@ -164,10 +165,15 @@ class SaganController(StateMachine):
         required_fields = ['pairing_code', 'device_id']
         return all(self.config.get(field, None) for field in required_fields)
 
+    def set_leds(self, cmd):
+        self.leds_file.write(cmd + '\n')
+        self.leds_file.flush()
+
     def halted(self):
         self.trigger('start')
 
     def halted_start(self):
+        self.set_leds('~')
         pass
 
     def started(self):
@@ -197,7 +203,7 @@ class SaganController(StateMachine):
         pass
 
     def starting_ap_ap_started(self):
-        pass
+        self.set_leds('y')
 
     def starting_ap_halt(self):
         check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
@@ -220,6 +226,7 @@ class SaganController(StateMachine):
             self.trigger('received_new_config')
         except (TimeoutExpired, CalledProcessError):
             self.trigger('halt')
+        self.set_leds('~')
 
     def serving_config_page_received_new_config(self):
         pass
@@ -281,6 +288,7 @@ class SaganController(StateMachine):
         pass
 
     def polling_for_work(self):
+        self.set_leds('g')
         try:
             check_call([
                 '/usr/bin/sudo',
@@ -290,7 +298,8 @@ class SaganController(StateMachine):
                 'job_poller.py',
                 str(self.config['device_id']),
                 self.config['host'],
-                os.path.join(os.curdir, 'sandbox')
+                os.path.join(os.curdir, 'sandbox'),
+                os.path.join(os.curdir, 'leds')
             ])
         except CalledProcessError as error:
             if error.returncode == 1:
