@@ -75,7 +75,7 @@ class Notifier:
             i += 1
 
     def run(self):
-        update_thread = Thread(self.update_leds)
+        update_thread = Thread(target=self.update_leds)
         update_thread.start()
         self.read_commands()
         update_thread.join()
