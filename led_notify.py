@@ -12,14 +12,14 @@ class Notifier:
         self.b = None
         self.queue = Queue()
         self.pattern_params = {
-            'w': ((0, 0),    (0, 0),    (0, 0)),
-            'r': ((1, 0),    (0, 0),    (0, 0)),
-            'g': ((0, 0),    (1, 0),    (0, 0)),
-            'b': ((0, 0),    (0, 0),    (1, 0)),
-            'c': ((0, 0),    (1, 0),    (1, 0)),
-            'y': ((1, 0),    (1, 0),    (0, 0)),
-            'm': ((1, 0),    (0, 1),    (1, 0)),
-            '~': ((1, 0),    (1, 0.33), (1, .66))
+            'w': ((0, 0), (0, 0), (0, 0)),
+            'r': ((1, 0), (0, 0), (0, 0)),
+            'g': ((0, 0), (1, 0), (0, 0)),
+            'b': ((0, 0), (0, 0), (1, 0)),
+            'c': ((0, 0), (1, 0), (1, 0)),
+            'y': ((1, 0), (1, 0), (0, 0)),
+            'm': ((1, 0), (0, 0), (1, 0)),
+            '~': ((1, 0), (1, 0.33), (1, .66))
         }
 
     def init(self):
@@ -76,9 +76,9 @@ class Notifier:
 
             if pattern:
                 params = self.pattern_params[pattern]
-                self.r.ChangeDutyCycle(int(cos((params[0][0] * i + params[0][1] * period) * pi / period) * 50) + 50)
-                self.g.ChangeDutyCycle(int(cos((params[1][0] * i + params[1][1] * period) * pi / period) * 50) + 50)
-                self.b.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * pi / period) * 50) + 50)
+                self.r.ChangeDutyCycle(int(cos((params[0][0] * i + params[0][1] * period) * 2 * pi / period) * 50) + 50)
+                self.g.ChangeDutyCycle(int(cos((params[1][0] * i + params[1][1] * period) * 2 * pi / period) * 50) + 50)
+                self.b.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * 2 * pi / period) * 50) + 50)
             i += 1
 
     def run(self):
