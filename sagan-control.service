@@ -1,4 +1,5 @@
 [Unit]
+Description=Sagan remote experiment scheduler
 Wants=network-online.target
 After=network.target network-online.target
 
