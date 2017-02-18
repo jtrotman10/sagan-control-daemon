@@ -21,6 +21,18 @@ class Notifier:
             'm': ((1, 0), (0, 0), (1, 0)),
             '~': ((1, 0), (1, 0.33), (1, .66))
         }
+        self.cmds = {
+            'w',
+            'r',
+            'g',
+            'b',
+            'c',
+            'y',
+            'm',
+            '~',
+            'n',
+            'x'
+        }
 
     def init(self):
         led1_pin = 27
@@ -55,6 +67,8 @@ class Notifier:
         try:
             while True:
                 cmd = input()
+                if cmd not in self.cmds:
+                    continue
                 self.queue.put(cmd)
                 if cmd == 'x':
                     break
