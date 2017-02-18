@@ -17,7 +17,7 @@ if [ ! -d sandbox ]; then
     sudo chown pi:pi sandbox
 fi
 
-if [ ! -e notify ]; then
+if [ ! -e leds ]; then
     sudo mkfifo leds
 fi
 

@@ -112,6 +112,7 @@ class Poller:
             self.kill_subproc()
         stop_event.set()
         heart_beat_thread.join()
+        self.set_leds('n')
 
     def heartbeat(self):
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
