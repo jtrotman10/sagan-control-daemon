@@ -23,14 +23,24 @@ class Notifier:
         }
 
     def init(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(23, GPIO.OUT)
-        GPIO.setup(24, GPIO.OUT)
-        GPIO.setup(25, GPIO.OUT)
+        led1_pin = 27
+        led2_pin = 22
+        red_pin = 25
+        green_pin = 23
+        blue_pin = 24
 
-        self.r = GPIO.PWM(25, 1000)  # channel=24 frequency=50Hz
-        self.g = GPIO.PWM(23, 1000)  # channel=24 frequency=50Hz
-        self.b = GPIO.PWM(24, 1000)  # channel=24 frequency=50Hz
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(red_pin, GPIO.OUT)
+        GPIO.setup(green_pin, GPIO.OUT)
+        GPIO.setup(blue_pin, GPIO.OUT)
+        GPIO.setup(led1_pin, GPIO.OUT)
+        GPIO.setup(led2_pin, GPIO.OUT)
+        GPIO.output(led1_pin, True)
+        GPIO.output(led2_pin, True)
+
+        self.r = GPIO.PWM(red_pin, 1000)  # channel=24 frequency=50Hz
+        self.g = GPIO.PWM(green_pin, 1000)  # channel=24 frequency=50Hz
+        self.b = GPIO.PWM(blue_pin, 1000)  # channel=24 frequency=50Hz
         self.r.start(100)
         self.g.start(100)
         self.b.start(100)
