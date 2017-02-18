@@ -14,13 +14,13 @@ pip install -r requirements.txt
 
 if [ ! -d sandbox ]; then
     sudo mkdir sandbox
-    sudo chown pi:pi sandbox
 fi
+sudo chown pi:pi sandbox
 
 if [ ! -e leds ]; then
     sudo mkfifo leds
-    sudo chown pi:pi leds
 fi
+sudo chown pi:pi leds
 
 sudo cp rc_local.txt /etc/rc.local
 sudo chmod +x /etc/rc.local
