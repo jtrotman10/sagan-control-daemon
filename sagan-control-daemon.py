@@ -208,8 +208,8 @@ class SaganController(StateMachine):
         check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
 
     def serving_config_page(self):
-        server = Popen([sys.executable, 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
-        lines = [decode(server.stdout.readline()) for _ in range(5)]
+        self.server = Popen([sys.executable, 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
+        lines = [decode(self.server.stdout.readline()) for _ in range(5)]
         if lines[4] != '\n':
             self.trigger('halt')
             return
@@ -218,9 +218,9 @@ class SaganController(StateMachine):
         self.config['psk'] = lines[2].strip()
         self.config['device_name'] = lines[3].strip()
         print('New config {}'.format(self.config))
-        server.terminate()
+        self.server.terminate()
         try:
-            server.wait(10)
+            self.server.wait(10)
             check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
             self.trigger('received_new_config')
         except (TimeoutExpired, CalledProcessError):

@@ -110,7 +110,7 @@ class Notifier:
                 self.b.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * 2 * pi / period) * 50) + 50)
             i += 1
 
-            sleep(0.1)
+            sleep(0.01)
 
     def run(self):
         update_thread = Thread(target=self.update_leds)
