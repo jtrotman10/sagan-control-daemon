@@ -201,7 +201,7 @@ class Poller:
             f.write(experiment['code_string'])
 
         env = os.environ.copy()
-        env['PATH'] = env['PATH'] + ':/home/pi/Documents/cuberider/sagandeployment/'
+        env['PATH'] = env['PATH'] + ':/home/pi/Documents/cuberider/'
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
