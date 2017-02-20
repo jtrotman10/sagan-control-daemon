@@ -1,4 +1,6 @@
 import time
+from time import sleep
+
 import RPi.GPIO as GPIO
 from math import cos, pi
 from threading import Thread
@@ -107,6 +109,8 @@ class Notifier:
                 self.g.ChangeDutyCycle(int(cos((params[1][0] * i + params[1][1] * period) * 2 * pi / period) * 50) + 50)
                 self.b.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * 2 * pi / period) * 50) + 50)
             i += 1
+
+            sleep(0.1)
 
     def run(self):
         update_thread = Thread(target=self.update_leds)
