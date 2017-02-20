@@ -60,10 +60,20 @@ def process_error(out_stream, ws: websocket.WebSocket, log_stream):
 
 
 def heart_beat(url, heart_beat_time, stop_trigger: Event):
+    retry_count = 0
     while not stop_trigger.is_set():
-        response = put(url, {})
-        if response.status_code not in (200, 204):
-            exit(1)
+        try:
+            response = put(url, {})
+            if response.status_code not in (200, 204):
+                exit(1)
+        except ConnectionError:
+            if retry_count > 3:
+                exit(1)
+            else:
+                sleep(10)
+                retry_count += 1
+        else:
+            retry_count = 0
         sleep(heart_beat_time)
 
 
@@ -109,6 +119,7 @@ class Poller:
                     exit(1)
                 else:
                     sleep(10)
+                    retry_count += 1
                     continue
             except KeyboardInterrupt:
                 self.state = 'exit'
