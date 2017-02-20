@@ -149,6 +149,7 @@ class Poller:
         return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
 
     def post_results(self):
+        print('Uploading results.')
         self.set_leds('~')
         self.out_log.flush()
         check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
@@ -181,12 +182,15 @@ class Poller:
         with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
+        env = os.environ.copy()
+        env['PATH'] = env['PATH'] + ':/home/pi/Documents/cuberider/sagandeployment'
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
             stdout=PIPE,
             stderr=STDOUT,
-            bufsize=0
+            bufsize=0,
+            env=env
         )
 
     def start_experiment(self, experiment):
