@@ -10,7 +10,7 @@ from time import sleep
 
 from requests import get, put, post
 from threading import Thread, Event
-from subprocess import Popen, PIPE, TimeoutExpired, check_call
+from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
 
 from requests.exceptions import ConnectionError
 import websocket
@@ -122,7 +122,7 @@ class Poller:
 
     def check_for_jobs(self):
         url = '{0}/dispatch/devices/{1}/queue'.format(self.host, self.device_id)
-        jobs = get(url).json()
+        jobs = [job for job in get(url).json() if job['state'] == 0]
         if len(jobs) > 0:
             next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
@@ -150,6 +150,7 @@ class Poller:
 
     def post_results(self):
         self.set_leds('~')
+        self.out_log.flush()
         check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
         result = post(
             '{0}/api/files/'.format(self.host),
@@ -158,15 +159,18 @@ class Poller:
                 'description': ('', 'Experiment results for job {}'.format(self.run_job))
             }
         )
-        assert result.status_code == 201
-        return put(
+        if result.status_code != 201:
+            print("Failed to upload results")
+        result = put(
             '{0}/dispatch/jobs/{1}/finish'.format(self.host, self.run_job),
             {
-                'out': self.out_log.getvalue(),
-                'error': self.stderr_text,
+                'out': '',
+                'error': '',
                 'results': result.json()['id']
             }
         )
+        if result.status_code != 200:
+            print("Failed to notify server that job finished")
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
@@ -181,9 +185,8 @@ class Poller:
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
             stdout=PIPE,
-            # stderr=PIPE,
+            stderr=STDOUT,
             bufsize=0
-
         )
 
     def start_experiment(self, experiment):
@@ -196,7 +199,7 @@ class Poller:
         self.websocket_out.connect(self.out_socket_url)
         self.start_experiment_proc(experiment)
         self.in_thread = Thread(target=websocket_recv, args=(self.websocket_in, self.experiment_process.stdin))
-        self.out_log = BytesIO()
+        self.out_log = open('experiment_log.txt', 'wb')
         self.out_thread = Thread(target=process_read,
                                  args=(self.experiment_process.stdout, self.websocket_out, self.out_log))
         self.in_thread.start()
