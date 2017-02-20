@@ -99,14 +99,21 @@ class Poller:
         stop_event = Event()
         heart_beat_thread = Thread(target=heart_beat, args=(url, 5, stop_event))
         heart_beat_thread.start()
+        retry_count = 0
         while self.state is not 'exit':
             try:
                 self.state_machine[self.state]()
             except ConnectionError as error:
                 print(error)
-                exit(1)
+                if retry_count > 3:
+                    exit(1)
+                else:
+                    sleep(10)
+                    continue
             except KeyboardInterrupt:
                 self.state = 'exit'
+            else:
+                retry_count = 0
 
         if self.experiment_process:
             self.kill_subproc()
