@@ -16,14 +16,14 @@ class Notifier:
         self.b = None
         self.queue = Queue()
         self.pattern_params = {
-            'w': ((0, 0), (0, 0), (0, 0)),
+            'w': ((1, 0), (1, 0), (1, 0)),
             'r': ((1, 0), (0, 0), (0, 0)),
             'g': ((0, 0), (1, 0), (0, 0)),
             'b': ((0, 0), (0, 0), (1, 0)),
             'c': ((0, 0), (1, 0), (1, 0)),
             'y': ((1, 0), (1, 0), (0, 0)),
             'm': ((1, 0), (0, 0), (1, 0)),
-            '~': ((1, 0), (1, 0.33), (1, .66))
+            '~': ((0.33, 0), (0.66, 0.33), (1, .66))
         }
         self.cmds = {
             'w',
@@ -81,7 +81,7 @@ class Notifier:
             self.queue.put('x')
 
     def update_leds(self):
-        period = 1000
+        period = 100
         i = 0
         pattern = None
         while 1:
@@ -109,6 +109,7 @@ class Notifier:
                 self.g.ChangeDutyCycle(int(cos((params[1][0] * i + params[1][1] * period) * 2 * pi / period) * 50) + 50)
                 self.b.ChangeDutyCycle(int(cos((params[2][0] * i + params[2][1] * period) * 2 * pi / period) * 50) + 50)
             i += 1
+            i %= 1000
 
             sleep(0.01)
 
