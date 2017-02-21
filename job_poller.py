@@ -145,8 +145,8 @@ class Poller:
             next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
             self.run_job = next_job['id']
-            self.in_socket_url = 'ws://echo.websocket.org'  # next_job['insocket']
-            self.out_socket_url = 'ws://echo.websocket.org'  # next_job['outsocket']
+            self.in_socket_url = next_job['insocket']
+            self.out_socket_url = next_job['outsocket']
             experiment = self.get_experiment(next_job['experiment'])
             self.start_experiment(experiment)
             self.notify_start()
