@@ -12,6 +12,13 @@ from requests import get, put, post
 from threading import Thread, Event
 from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
 
+# for socket debug
+import logging
+logging.getLogger('socketIO-client').setLevel(logging.DEBUG)
+logging.basicConfig()
+
+from socketIO_client import SocketIO, LoggingNamespace
+
 from requests.exceptions import ConnectionError
 import websocket
 
@@ -215,10 +222,10 @@ class Poller:
         print('Starting experiment "{}".'.format(experiment['title']))
         self.set_leds('n')
         self.clean_sandbox()
-        self.websocket_in = websocket.WebSocket()
-        self.websocket_in.connect(self.in_socket_url)
-        self.websocket_out = websocket.WebSocket()
-        self.websocket_out.connect(self.out_socket_url)
+
+        self.socket = websocket.WebSocket()
+        self.socket.connect(self.in_socket_url)
+
         self.start_experiment_proc(experiment)
         self.in_thread = Thread(target=websocket_recv, args=(self.websocket_in, self.experiment_process.stdin))
         self.out_log = open('experiment_log.txt', 'wb')
