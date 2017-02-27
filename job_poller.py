@@ -216,6 +216,7 @@ class Poller:
         )
 
     def handle_socket_stdin(self, data):
+        print("socket event on [stdin] channel with data <{}>".format(data))
         self.experiment_process.stdin.write(data)
         self.out_log.write(data)
 
