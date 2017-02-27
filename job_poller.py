@@ -29,9 +29,6 @@ _current_poller = None
 
 def process_read(out_stream, socket, log_stream):
     while True:
-        # check if the thread should exit
-        if os.environ['OUT_THREAD_ACTIVE'] != "1":
-            break
         try:
             data = os.read(out_stream.fileno(), 512)
         except OSError:
@@ -197,7 +194,6 @@ class Poller:
         if result.status_code != 200:
             print("Failed to notify server that job finished")
 
-    @staticmethod
     def clean_sandbox(self):
         files = os.listdir(path='.')
         if files:
@@ -240,7 +236,6 @@ class Poller:
         # add event handlers for the socket; stdin
         self.socket.on('stdin', self.handle_socket_stdin)
 
-        os.environ['OUT_THREAD_ACTIVE'] = "1"
         self.out_thread = Thread(
             target=process_read,
             args=(
@@ -254,7 +249,6 @@ class Poller:
     def end_experiment(self):
         self.websocket_in.close()
 
-        os.environ['OUT_THREAD_ACTIVE'] = "0"
         self.out_thread.join()
 
         self.socket.close()
