@@ -228,7 +228,9 @@ class Poller:
         # connect the socket
         self.ip = self.socket_url.split(":")[0]
         self.port = self.socket_url.split(":")[1]
+        print("creating socket")
         self.socket = SocketIO(self.ip, self.port, LoggingNamespace)
+        print("socket: "+ str(self.socket))
 
         self.start_experiment_proc(experiment)
 
