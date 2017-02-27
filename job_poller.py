@@ -27,17 +27,11 @@ from websocket import WebSocketConnectionClosedException
 _current_poller = None
 
 
-def websocket_recv(ws: websocket.WebSocket, in_stream):
-    while ws.connected:
-        try:
-            message = ws.recv()
-            in_stream.write(message.encode())
-        except (WebSocketConnectionClosedException, BrokenPipeError):
-            break
-
-
-def process_read(out_stream, ws: websocket.WebSocket, log_stream):
+def process_read(out_stream, socket, log_stream):
     while True:
+        # check if the thread should exit
+        if os.environ['OUT_THREAD_ACTIVE'] != "1":
+            break
         try:
             data = os.read(out_stream.fileno(), 512)
         except OSError:
@@ -45,7 +39,7 @@ def process_read(out_stream, ws: websocket.WebSocket, log_stream):
         if data == b'':
             break
         try:
-            ws.send(decode(data))
+            socket.emit('stdout', data)
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
             break
@@ -88,10 +82,16 @@ class Poller:
     def __init__(self, device_id, host, leds=None):
         self.device_id = device_id
         self.host = host
+        self.out_thread = None
         self.run_job = None
+        self.out_log = None
         self.experiment_process = None  # type: Popen
+        self.ip = None
+        self.port = None
+        self.socket = None
         self.results_stream = None
         self.error_stream = None
+        self.socket_url = None
         self.stdout_text = b''
         self.stderr_text = b''
         self.state = 'polling'
@@ -152,8 +152,7 @@ class Poller:
             next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
             self.run_job = next_job['id']
-            self.in_socket_url = next_job['insocket']
-            self.out_socket_url = next_job['outsocket']
+            self.socket_url = next_job['socket']
             experiment = self.get_experiment(next_job['experiment'])
             self.start_experiment(experiment)
             self.notify_start()
@@ -198,6 +197,7 @@ class Poller:
         if result.status_code != 200:
             print("Failed to notify server that job finished")
 
+    @staticmethod
     def clean_sandbox(self):
         files = os.listdir(path='.')
         if files:
@@ -208,7 +208,7 @@ class Poller:
             f.write(experiment['code_string'])
 
         env = os.environ.copy()
-        env['PATH'] = env['PATH'] + ':/home/pi/Documents/cuberider/'
+        env['PATH'] += ':/home/pi/Documents/cuberider/'
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
@@ -218,27 +218,46 @@ class Poller:
             env=env
         )
 
+    def handle_socket_stdin(self, data):
+        self.experiment_process.stdin.write(data)
+        self.out_log.write(data)
+
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
         self.set_leds('n')
         self.clean_sandbox()
 
-        self.socket = websocket.WebSocket()
-        self.socket.connect(self.in_socket_url)
+        # connect the socket
+        self.ip = self.socket_url.split(":")[0]
+        self.port = self.socket_url.split(":")[1]
+        self.socket = SocketIO(self.ip, self.port, LoggingNamespace)
 
         self.start_experiment_proc(experiment)
-        self.in_thread = Thread(target=websocket_recv, args=(self.websocket_in, self.experiment_process.stdin))
+
+        # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
-        self.out_thread = Thread(target=process_read,
-                                 args=(self.experiment_process.stdout, self.websocket_out, self.out_log))
-        self.in_thread.start()
+
+        # add event handlers for the socket; stdin
+        self.socket.on('stdin', self.handle_socket_stdin)
+
+        os.environ['OUT_THREAD_ACTIVE'] = "1"
+        self.out_thread = Thread(
+            target=process_read,
+            args=(
+                self.experiment_process.stdout,
+                self.socket,
+                self.out_log
+            )
+        )
         self.out_thread.start()
 
     def end_experiment(self):
         self.websocket_in.close()
-        self.in_thread.join()
+
+        os.environ['OUT_THREAD_ACTIVE'] = "0"
         self.out_thread.join()
-        self.websocket_out.close()
+
+        self.socket.close()
         self.post_results()
         self.experiment_process = None
         self.clean_sandbox()
