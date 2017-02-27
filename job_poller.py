@@ -226,6 +226,7 @@ class Poller:
         self.clean_sandbox()
 
         # connect the socket
+        print(self.socket_url)
         self.ip = self.socket_url.split(":")[0]
         self.port = self.socket_url.split(":")[1]
         print("creating socket with {}:{}".format(self.ip, self.port))
