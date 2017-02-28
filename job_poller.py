@@ -147,12 +147,6 @@ class Poller:
         heart_beat_thread.join()
         self.set_leds('n')
 
-    def heartbeat(self):
-        url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
-        response = put(url, {'state': 0 if self.state is 'polling' else 1})
-        if response.status_code not in (200, 204):
-            exit(1)
-
     def check_for_jobs(self):
         url = '{0}/dispatch/devices/{1}/queue'.format(self.host, self.device_id)
         jobs = [job for job in get(url).json() if job['state'] == 0]
@@ -256,6 +250,7 @@ class Poller:
             on_open=on_open
         )
         self.socket.run_forever()
+        print("socket initialised")
         self.start_experiment_proc(experiment)
 
         # create experiment log file
