@@ -224,7 +224,7 @@ class Poller:
 
     def handle_stdin(self, message):
         print("stdin message recieved <{}>".format(message))
-        self.experiment_process.stdin.write(message)
+        self.experiment_process.stdin.write(message.encode())
         self.experiment_process.stdin.flush()
         self.out_log.write(message)
 
