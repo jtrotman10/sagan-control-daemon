@@ -15,7 +15,7 @@ import sys
 import os
 
 _current_poller = None
-
+_TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
 # --------------- web socket event handlers -------------------------
 
 
@@ -100,9 +100,12 @@ class Poller:
         self.ip = None
         self.port = None
         self.socket = None
+        self.FIFO = None
+        self.fifo_thread = None
         self.results_stream = None
         self.error_stream = None
         self.socket_url = None
+        self.telemetry_pipe = None
         self.stdout_text = b''
         self.stderr_text = b''
         self.state = 'polling'
@@ -235,6 +238,11 @@ class Poller:
             self.handle_stdin(payload[1])
         else:
             pass
+    
+    def handle_telemetry_pipe(self, socket, FIFO):
+        while True:
+            line = FIFO.read()
+            emit(socket, "telem", line)
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
@@ -255,8 +263,20 @@ class Poller:
         )
         self.start_experiment_proc(experiment)
 
+        # create the rendezvous point
+        os.mkfifo(_TELEMETRY_PIPE_PATH)
+        self.FIFO = open(_TELEMETRY_PIPE_PATH, "r", 0)
+
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
+
+        self.fifo_thread = Thread(
+            target=self.handle_telemetry_pipe,
+            args=(
+                self.socket,
+                self.FIFO
+            )
+        )
 
         self.out_thread = Thread(
             target=process_read,
