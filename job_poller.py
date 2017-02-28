@@ -264,12 +264,18 @@ class Poller:
             )
         )
         self.out_thread.start()
-        self.socket.run_forever()
+        self.socket.keep_running = True
+        self.socket_thread = Thread(target=self.socket.run_forever)
+        self.socket_thread.daemon = True
+        self.socket_thread.start()
+
+
         print("socket initialised")
 
     def end_experiment(self):
         self.out_thread.join()
         self.socket.close()
+        self.socket.keep_running = False
         self.post_results()
         self.experiment_process = None
         self.clean_sandbox()
