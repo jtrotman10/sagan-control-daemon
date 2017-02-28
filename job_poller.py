@@ -1,30 +1,53 @@
-import sys
+#!/env/bin/python3
 
-import time
-from codecs import decode
-
-import os
-from glob import glob
-from io import BytesIO
-from time import sleep
-
-from requests import get, put, post
-from threading import Thread, Event
 from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
-
-# for socket debug
-import logging
-logging.getLogger('socketIO-client').setLevel(logging.DEBUG)
-logging.basicConfig()
-
-from socketIO_client import SocketIO, LoggingNamespace
-
-from requests.exceptions import ConnectionError
-import websocket
-
 from websocket import WebSocketConnectionClosedException
+from requests.exceptions import ConnectionError
+from threading import Thread, Event
+from requests import get, put, post
+from codecs import decode
+from time import sleep
+from glob import glob
+import websocket
+import time
+import json
+import sys
+import os
 
 _current_poller = None
+
+# --------------- web socket event handlers -------------------------
+
+
+def emit(ws, channel, message):
+    ws.send('{"a": {"0":"{}","1":"{}"}}'.format(channel, message))
+
+
+def handle_stdin(obj, message):
+    print("stdin message recieved <{}>".format(message))
+    obj.experiment_process.stdin.write(message)
+    obj.out_log.write(message)
+
+def on_error(ws, error):
+    print("### error ### {}".format(error))
+
+
+def on_close(ws):
+    print("### closed ###")
+
+
+def on_open(ws):
+    print("### opened ###")
+
+
+def on_message(_, message):
+    payload = json.loads(message)['a']
+    payload = [payload["0"], payload["1"]]
+    if str(payload[0]) == "stdin":
+        handle_stdin(payload[1])
+    else:
+        pass
+# --------------- end web socket event handlers -------------------------
 
 
 def process_read(out_stream, socket, log_stream):
@@ -37,13 +60,13 @@ def process_read(out_stream, socket, log_stream):
             break
         try:
             print("socket emit <{}>".format(data.decode("utf8")))
-            socket.emit('stdout', data.decode("utf8"))
+            emit(socket, 'stdout', data.decode("utf8"))
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
             break
 
 
-def process_error(out_stream, ws: websocket.WebSocket, log_stream):
+def process_error(out_stream, socket, log_stream):
     while True:
         try:
             data = os.read(out_stream.fileno(), 512)
@@ -52,7 +75,7 @@ def process_error(out_stream, ws: websocket.WebSocket, log_stream):
         if data == b'':
             break
         try:
-            ws.send(decode(data))
+            emit(socket, 'stder', decode(data))
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
             break
@@ -215,10 +238,6 @@ class Poller:
             env=env
         )
 
-    def handle_socket_stdin(self, data):
-        print("socket event on [stdin] channel with data <{}>".format(data))
-        self.experiment_process.stdin.write(data)
-        self.out_log.write(data)
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
@@ -226,20 +245,23 @@ class Poller:
         self.clean_sandbox()
 
         # connect the socket
-        print(self.socket_url)
-        self.ip = self.socket_url.split(":")[0]
+        self.ip = (self.socket_url.split(":")[1])[2:]
         self.port = self.socket_url.split(":")[1]
-        print("creating socket with {}:{}".format(self.ip, self.port))
-        self.socket = SocketIO(self.ip, self.port, LoggingNamespace)
-        print("socket: "+str(self.socket))
 
+        # connect to the websocket
+        websocket.enableTrace(True)
+        self.socket = websocket.WebSocketApp(
+            self.socket_url,
+            on_message=on_message,
+            on_error=on_error,
+            on_close=on_close,
+            on_open=on_open
+        )
+        self.socket.run_forever()
         self.start_experiment_proc(experiment)
 
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
-
-        # add event handlers for the socket; stdin
-        self.socket.on('stdin', self.handle_socket_stdin)
 
         self.out_thread = Thread(
             target=process_read,
@@ -252,10 +274,7 @@ class Poller:
         self.out_thread.start()
 
     def end_experiment(self):
-        self.websocket_in.close()
-
         self.out_thread.join()
-
         self.socket.close()
         self.post_results()
         self.experiment_process = None
