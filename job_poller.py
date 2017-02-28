@@ -92,6 +92,7 @@ class Poller:
         self.host = host
         self.out_thread = None
         self.run_job = None
+        self.socket_thread = None
         self.out_log = None
         self.experiment_process = None  # type: Popen
         self.ip = None
@@ -249,8 +250,8 @@ class Poller:
             on_close=on_close,
             on_open=on_open
         )
-        t = Thread(target=self.socket.run_forever, args=())
-        t.start()
+        self.socket_thread = Thread(target=self.socket.run_forever, args=())
+        self.socket_thread.start()
         print("socket initialised")
         self.start_experiment_proc(experiment)
 
@@ -270,6 +271,7 @@ class Poller:
     def end_experiment(self):
         self.out_thread.join()
         self.socket.close()
+        self.socket_thread.join()
         self.post_results()
         self.experiment_process = None
         self.clean_sandbox()
