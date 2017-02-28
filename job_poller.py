@@ -249,7 +249,8 @@ class Poller:
             on_close=on_close,
             on_open=on_open
         )
-        self.socket.run_forever()
+        t = Thread(target=self.socket.run_forever, args=())
+        t.start()
         print("socket initialised")
         self.start_experiment_proc(experiment)
 
