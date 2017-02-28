@@ -23,11 +23,6 @@ def emit(ws, channel, message):
     ws.send('{"a": {"0":"{}","1":"{}"}}'.format(channel, message))
 
 
-def handle_stdin(obj, message):
-    print("stdin message recieved <{}>".format(message))
-    obj.experiment_process.stdin.write(message)
-    obj.out_log.write(message)
-
 def on_error(ws, error):
     print("### error ### {}".format(error))
 
@@ -39,14 +34,6 @@ def on_close(ws):
 def on_open(ws):
     print("### opened ###")
 
-
-def on_message(_, message):
-    payload = json.loads(message)['a']
-    payload = [payload["0"], payload["1"]]
-    if str(payload[0]) == "stdin":
-        handle_stdin(payload[1])
-    else:
-        pass
 # --------------- end web socket event handlers -------------------------
 
 
@@ -238,6 +225,18 @@ class Poller:
             env=env
         )
 
+    def handle_stdin(self, message):
+        print("stdin message recieved <{}>".format(message))
+        self.experiment_process.stdin.write(message)
+        self.out_log.write(message)
+
+    def on_message(self, _, message):
+        payload = json.loads(message)['a']
+        payload = [payload["0"], payload["1"]]
+        if str(payload[0]) == "stdin":
+            self.handle_stdin(payload[1])
+        else:
+            pass
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
@@ -252,7 +251,7 @@ class Poller:
         websocket.enableTrace(True)
         self.socket = websocket.WebSocketApp(
             self.socket_url,
-            on_message=on_message,
+            on_message=self.on_message,
             on_error=on_error,
             on_close=on_close,
             on_open=on_open
