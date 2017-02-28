@@ -250,9 +250,6 @@ class Poller:
             on_close=on_close,
             on_open=on_open
         )
-        self.socket_thread = Thread(target=self.socket.run_forever, args=())
-        self.socket_thread.start()
-        print("socket initialised")
         self.start_experiment_proc(experiment)
 
         # create experiment log file
@@ -267,11 +264,12 @@ class Poller:
             )
         )
         self.out_thread.start()
+        self.socket.run_forever()
+        print("socket initialised")
 
     def end_experiment(self):
         self.out_thread.join()
         self.socket.close()
-        self.socket_thread.join()
         self.post_results()
         self.experiment_process = None
         self.clean_sandbox()
