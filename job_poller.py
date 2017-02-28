@@ -20,7 +20,7 @@ _current_poller = None
 
 
 def emit(ws, channel, message):
-    payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + message + "\"}}")
+    payload = "{\"a\":{\"0\":\""+channel+"\",\"1\":\""+message+"\"}}"
     print(payload)
     ws.send(payload)
 
