@@ -241,8 +241,13 @@ class Poller:
     
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
-            line = FIFO.read()
-            emit(socket, "telem", line)
+            result = ""
+            chr = FIFO.read(1)
+            result += chr
+            while chr != '\n':
+                chr = FIFO.read(1)
+                result += chr
+            emit(socket, "telem", result)
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
