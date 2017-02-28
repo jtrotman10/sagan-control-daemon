@@ -20,7 +20,7 @@ _current_poller = None
 
 
 def emit(ws, channel, message):
-    ws.send('{"a": {"0":"{}","1":"{}"}}'.format(channel, message))
+    ws.send("{\"a\": {\"0\":\""+str(channel)+"\",\"1\":\""+message+"\"}}")
 
 
 def on_error(ws, error):
