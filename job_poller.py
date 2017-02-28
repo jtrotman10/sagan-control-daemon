@@ -24,15 +24,15 @@ def emit(ws, channel, message):
 
 
 def on_error(ws, error):
-    print("### error ### {}".format(error))
+    print("### web socket error  ### {}".format(error))
 
 
 def on_close(ws):
-    print("### closed ###")
+    print("### web socket closed ###")
 
 
 def on_open(ws):
-    print("### opened ###")
+    print("### web socket opened ###")
 
 # --------------- end web socket event handlers -------------------------
 
@@ -248,7 +248,6 @@ class Poller:
         self.port = self.socket_url.split(":")[1]
 
         # connect to the websocket
-        websocket.enableTrace(True)
         self.socket = websocket.WebSocketApp(
             self.socket_url,
             on_message=self.on_message,
