@@ -46,7 +46,7 @@ def process_read(out_stream, socket, log_stream):
         if data == b'':
             break
         try:
-            print("socket emit <{}>".format(data.decode("utf8")))
+            print("socket emit (stdout) <{}>".format(data.decode("utf8")))
             emit(socket, 'stdout', data.decode("utf8"))
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
