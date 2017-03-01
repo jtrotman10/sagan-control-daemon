@@ -286,6 +286,7 @@ class Poller:
                 self.FIFO
             )
         )
+        self.fifo_thread.start()
 
         self.out_thread = Thread(
             target=process_read,
