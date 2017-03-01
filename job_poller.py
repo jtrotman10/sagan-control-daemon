@@ -309,6 +309,7 @@ class Poller:
     def end_experiment(self):
         self.out_thread.join()
         self.socket.close()
+        self.FIFO.close()
         self.socket.keep_running = False
         self.post_results()
         self.experiment_process = None
