@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-sudo apt-get -y install hostapd udhcpd zip
+sudo apt-get -y install hostapd dnsmasq zip
 
 # Set up virtual environment
 sudo pip3 install virtualenv
@@ -28,7 +28,6 @@ sudo chmod +x run.sh
 sudo chmod +x run-notifier.sh
 sudo cp hostapd.conf /etc/hostapd/
 sudo cp init.d_hostapd /etc/init.d/hostapd
-sudo cp udhcpd.conf /etc/
-sudo cp default_udhcpd /etc/default/udhcpd
+sudo cp dnsmasq.conf /etc/
 sudo systemctl daemon-reload
 
