@@ -208,7 +208,7 @@ class SaganController(StateMachine):
         check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
 
     def serving_config_page(self):
-        self.server = Popen([sys.executable, 'server.py', '0.0.0.0', '8001'], stdout=PIPE)
+        self.server = Popen([sys.executable, 'server.py', '0.0.0.0', '80'], stdout=PIPE)
         lines = [decode(self.server.stdout.readline()) for _ in range(5)]
         if lines[4] != '\n':
             self.trigger('halt')
