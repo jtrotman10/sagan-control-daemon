@@ -242,10 +242,12 @@ class Poller:
             try:
                 result = FIFO.readline()
             except OSError:
-                print("(read EOF from FIFO) CLOSING TELEMETRY THREAD")
+                print("(OSError) CLOSING TELEMETRY THREAD")
                 break
             except ValueError:
-                continue
+                print("(ValueError) CLOSING TELEMETRY THREAD")
+                pass
+
             if result != "":
                 try:
                     payload = {
@@ -258,6 +260,9 @@ class Poller:
                 except (BrokenPipeError, WebSocketConnectionClosedException):
                     print("(could not write to socket )CLOSING TELEMETRY THREAD")
                     break
+            else:
+                print("(EOF) CLOSING TELEMETRY THREAD")
+                break
 
 
 
@@ -304,7 +309,6 @@ class Poller:
                 self.FIFO
             )
         )
-        os.environ['CLOSE_FIFO'] = '0'
         self.fifo_thread.start()
 
         self.out_thread = Thread(
