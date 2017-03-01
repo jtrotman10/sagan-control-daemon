@@ -247,10 +247,16 @@ class Poller:
             except ValueError:
                 continue
             if result != "":
-                print("TELEMETRY RECIEVED FROM SAGAN LIBS <{}>".format(result))
-                payload = str("{\"a\":{\"0\":\"" + "telem" + "\",\"1\":\"" + str(result.encode("utf8"))[2:-1] + "\"}}")
-                socket.send(payload)
-                print("send payload <{}>".format(payload))
+
+                payload = {
+                    "a": {
+                        "0": "telem",
+                        "1": str(result.encode("utf8"))[2:-1]
+                    }
+                }
+
+                socket.send(json.dumps(payload))
+                print("sending payload form telem event <\n---\n{}\n---\n>".format(payload))
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
