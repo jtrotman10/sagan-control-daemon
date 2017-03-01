@@ -240,6 +240,7 @@ class Poller:
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
             if os.environ['CLOSE_FIFO'] == '1':
+                print("CLOSING TELEMETRY THREAD")
                 break
             result = FIFO.readline()
             if result != "":
