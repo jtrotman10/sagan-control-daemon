@@ -285,7 +285,7 @@ class Poller:
 
         # open file to write to
         try:
-            self.FIFO = open(_TELEMETRY_PIPE_PATH, 'r', 0)
+            self.FIFO = open(_TELEMETRY_PIPE_PATH, 'r')
         except FileNotFoundError:
             emit(self.socket, 'error', "sagan telemetry configuration error")
 
