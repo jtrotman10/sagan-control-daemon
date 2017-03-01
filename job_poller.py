@@ -242,7 +242,10 @@ class Poller:
             if os.environ['CLOSE_FIFO'] == '1':
                 print("CLOSING TELEMETRY THREAD")
                 break
-            result = FIFO.readline()
+            try:
+                result = FIFO.readline()
+            except ValueError:
+                continue
             if result != "":
                 print("TELEMETRY RECIEVED FROM SAGAN LIBS <{}>".format(result))
                 payload = str("{\"a\":{\"0\":\"" + "telem" + "\",\"1\":\"" + str(result.encode("utf8"))[2:-1] + "\"}}")
@@ -313,8 +316,9 @@ class Poller:
     def end_experiment(self):
         self.out_thread.join()
         self.socket.close()
-        self.FIFO.close()
+
         os.environ['CLOSE_FIFO'] = '1'
+        self.FIFO.close()
         self.fifo_thread.join()
         self.socket.keep_running = False
         self.post_results()
