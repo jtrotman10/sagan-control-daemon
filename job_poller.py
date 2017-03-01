@@ -242,7 +242,9 @@ class Poller:
             result = FIFO.readline()
             if result != "":
                 print("TELEMETRY RECIEVED FROM SAGAN LIBS <{}>".format(result))
-                emit(socket, "telem", result)
+                payload = str("{\"a\":{\"0\":\"" + "telem" + "\",\"1\":\"" + str(result.encode("utf8"))[2:-1] + "\"}}")
+                socket.send(payload)
+                print("send payload <{}>".format(payload))
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
