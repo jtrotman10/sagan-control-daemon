@@ -239,6 +239,8 @@ class Poller:
     
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
+            if os.environ['CLOSE_FIFO'] == '1':
+                break
             result = FIFO.readline()
             if result != "":
                 print("TELEMETRY RECIEVED FROM SAGAN LIBS <{}>".format(result))
@@ -289,6 +291,7 @@ class Poller:
                 self.FIFO
             )
         )
+        os.environ['CLOSE_FIFO'] = '0'
         self.fifo_thread.start()
 
         self.out_thread = Thread(
@@ -310,6 +313,8 @@ class Poller:
         self.out_thread.join()
         self.socket.close()
         self.FIFO.close()
+        os.environ['CLOSE_FIFO'] = '1'
+        self.fifo_thread.join()
         self.socket.keep_running = False
         self.post_results()
         self.experiment_process = None
