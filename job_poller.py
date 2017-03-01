@@ -21,7 +21,6 @@ _TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
 
 def emit(ws, channel, message):
     payload = str("{\"a\":{\"0\":\""+channel+"\",\"1\":\""+str(message.encode("utf8"))[2:-1]+"\"}}")
-    print(payload)
     ws.send(payload)
 
 
@@ -226,7 +225,6 @@ class Poller:
         )
 
     def handle_stdin(self, message):
-        print("stdin message recieved <{}>".format(message))
         self.experiment_process.stdin.write(message.encode())
         self.experiment_process.stdin.flush()
         self.out_log.write(message)
@@ -241,22 +239,24 @@ class Poller:
     
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
-            result = ""
-            chr = FIFO.read(1)
-            result += chr
-            while chr != '\n':
-                chr = FIFO.read(1)
-                result += chr
-            emit(socket, "telem", result)
-
-    # def open_fifo(self):
-    #     for _ in range(3):
-    #         try:
-    #             file = open(_TELEMETRY_PIPE_PATH, 'r', 0)
-    #             return file
-    #         except:
-    #             time.sleep(0.01)
-    #     raise FileNotFoundError
+            if os.environ['CLOSE_FIFO'] == '1':
+                print("CLOSING TELEMETRY THREAD")
+                break
+            try:
+                result = FIFO.readline()
+            except ValueError:
+                continue
+            if result != "":
+                try:
+                    payload = {
+                        "a": {
+                            "0": "telem",
+                            "1": str(result.encode("utf8"))[2:-1]
+                        }
+                    }
+                    socket.send(json.dumps(payload))
+                except:
+                    continue
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
@@ -286,7 +286,9 @@ class Poller:
         # open file to write to
         try:
             self.FIFO = open(_TELEMETRY_PIPE_PATH, 'r')
+            print("FOUND FIFO")
         except FileNotFoundError:
+            print("FIFO NOT FOUND")
             emit(self.socket, 'error', "sagan telemetry configuration error")
 
         # create experiment log file
@@ -299,6 +301,8 @@ class Poller:
                 self.FIFO
             )
         )
+        os.environ['CLOSE_FIFO'] = '0'
+        self.fifo_thread.start()
 
         self.out_thread = Thread(
             target=process_read,
@@ -313,13 +317,15 @@ class Poller:
         self.socket_thread = Thread(target=self.socket.run_forever)
         self.socket_thread.daemon = True
         self.socket_thread.start()
-
-
-        print("socket initialised")
+        print('Experiment setup complete.')
 
     def end_experiment(self):
         self.out_thread.join()
         self.socket.close()
+
+        os.environ['CLOSE_FIFO'] = '1'
+        self.FIFO.close()
+        self.fifo_thread.join()
         self.socket.keep_running = False
         self.post_results()
         self.experiment_process = None
