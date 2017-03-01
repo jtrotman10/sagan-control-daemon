@@ -21,7 +21,6 @@ _TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
 
 def emit(ws, channel, message):
     payload = str("{\"a\":{\"0\":\""+channel+"\",\"1\":\""+str(message.encode("utf8"))[2:-1]+"\"}}")
-    print(payload)
     ws.send(payload)
 
 
@@ -226,7 +225,6 @@ class Poller:
         )
 
     def handle_stdin(self, message):
-        print("stdin message recieved <{}>".format(message))
         self.experiment_process.stdin.write(message.encode())
         self.experiment_process.stdin.flush()
         self.out_log.write(message)
@@ -313,9 +311,7 @@ class Poller:
         self.socket_thread = Thread(target=self.socket.run_forever)
         self.socket_thread.daemon = True
         self.socket_thread.start()
-
-
-        print("socket initialised")
+        print('Experiment setup complete.')
 
     def end_experiment(self):
         self.out_thread.join()
