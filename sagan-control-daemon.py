@@ -145,7 +145,7 @@ class SaganController(StateMachine):
         'psk': '',
         'host': 'http://launchpad.cuberider.com',
         'interface': 'wlan0',
-        'user': 'pi'
+        'user': 'remote-experiments'
     }
 
     def save_config(self):

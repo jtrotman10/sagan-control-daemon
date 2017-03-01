@@ -12,15 +12,20 @@ fi
 . env/bin/activate
 pip install -r requirements.txt
 
+user="remote-experiments"
+if ! id ${user} >/dev/null 2>&1; then
+    useradd -r ${user}
+fi
+
 if [ ! -d sandbox ]; then
     sudo mkdir sandbox
 fi
-sudo chown pi:pi sandbox
+sudo chown ${user}:${user} sandbox
 
 if [ ! -e leds ]; then
     sudo mkfifo leds
 fi
-sudo chown pi:pi leds
+sudo chown ${user}:${user} leds
 
 # Set up start up script
 sudo cp rc_local.txt /etc/rc.local
