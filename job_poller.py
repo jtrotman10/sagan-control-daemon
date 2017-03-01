@@ -249,6 +249,15 @@ class Poller:
                 result += chr
             emit(socket, "telem", result)
 
+    def open_fifo(self):
+        for _ in range(3):
+            try:
+                file = open(_TELEMETRY_PIPE_PATH, 'r', 0)
+                return file
+            except:
+                time.sleep(0.01)
+        raise FileNotFoundError
+
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
         self.set_leds('n')
@@ -269,8 +278,16 @@ class Poller:
         self.start_experiment_proc(experiment)
 
         # create the rendezvous point
-        os.mkfifo(_TELEMETRY_PIPE_PATH)
-        self.FIFO = open(_TELEMETRY_PIPE_PATH, "r", 0)
+        try:
+            os.mkfifo(_TELEMETRY_PIPE_PATH)
+        except FileExistsError:
+            pass
+
+        # open file to write to
+        try:
+            self.FIFO = self.open_fifo()
+        except FileNotFoundError:
+            emit(self.socket, 'error', "sagan telemetry configuration error")
 
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
