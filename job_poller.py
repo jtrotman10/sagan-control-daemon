@@ -242,10 +242,13 @@ class Poller:
             result = ""
             chr = FIFO.read(1)
             result += chr
+            print("telem <" + result + ">")
             while chr != '\n':
                 chr = FIFO.read(1)
                 result += chr
+                print("telem <" + result + ">")
             emit(socket, "telem", result)
+            print("telem sent")
 
     # def open_fifo(self):
     #     for _ in range(3):
