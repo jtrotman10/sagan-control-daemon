@@ -4,6 +4,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import sys
 from urllib.parse import parse_qs
+from json import dumps
 
 from os.path import isfile
 
@@ -11,19 +12,22 @@ from os.path import isfile
 def preprocess_file(file, context):
     with open(file, 'r') as f:
         source = f.read()
-    return source.format(**context).encode()
+    return source.format(json=dumps(context)).encode()
 
 _context = {
+    'paired': '0',
     'ssid': '',
     'psk': '',
+    'device_id': '',
     'pairing_code': '',
-    'name': ''
+    'name': '',
+    'error': '',
+    'networks': ''
 }
 
 
 class Handler(SimpleHTTPRequestHandler):
     def render(self, path):
-        global _context
         content = b''
         status = 404
         if isfile(path):
@@ -50,10 +54,8 @@ class Handler(SimpleHTTPRequestHandler):
         content_length = self.headers.get('content-length', '0')
         post_body = self.rfile.read(int(content_length))
         config_values = parse_qs(post_body)
-        _context.update({decode(k): decode(v[0]) for k, v in config_values.items()})
-
-        self.path = '/configuring.html'
-        self.do_GET()
+        config_values = ({decode(k): decode(v[0]) for k, v in config_values.items()})
+        _context.update(config_values)
 
         print(_context['pairing_code'])
         print(_context['ssid'])
@@ -64,6 +66,17 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
+    i = 3
+    while i < len(sys.argv):
+        try:
+            key = sys.argv[i]
+            value = sys.argv[i + 1]
+        except KeyError:
+            exit(1)
+            return
+        _context[key] = value
+        i += 2
+
     os.chdir('content')
     server = HTTPServer((sys.argv[1], int(sys.argv[2])), Handler)
     server.serve_forever()

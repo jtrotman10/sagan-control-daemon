@@ -12,35 +12,69 @@
     <script src="bootstrap/js/bootstrap.min.js"
             crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="index.css">
+    <script src="main.js"></script>
 </head>
 <body>
+
+<div id="networksModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Select Network</h4>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group" id="networks">
+
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="data" style="display: none;">
+    {json}
+</div>
+
 <div class="container">
     <div class="row main-panel">
         <div class="col-sm-12">
             <h3>
                 Set up your Sagan!
             </h3>
+            <p id="message">
+
+            </p>
             <form class="form" method="post" action='/' enctype="application/x-www-form-urlencoded">
-                <div class="form-group">
+                <div id="code-input-group" class="form-group">
                     <label for="code-input">Pairing code</label>
-                    <input class="form-control" id="code-input" name="pairing_code" value="{pairing_code}"/>
+                    <input class="form-control" id="code-input" name="pairing_code"/>
+                </div>
+                <div id="name-input-group" class="form-group">
+                    <label for="name-input">Name (Optional, but you can pick one!)</label>
+                    <input class="form-control" id="name-input" name="name"/>
                 </div>
                 <div class="form-group">
                     <label for="ssid-input">Wifi Name (SSID)</label>
-                    <input class="form-control" id="ssid-input" name="ssid" value="{ssid}"/>
+                    <div class="input-group">
+                        <input class="form-control" type="text" id="ssid-input" name="ssid"/>
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" data-toggle="modal" data-target="#networksModal"
+                                    type="button">
+                                Select
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label for="psk-input">Wifi Password</label>
-                    <input class="form-control" id="psk-input" name="psk" value="{psk}"/>
-                </div>
-                <div class="form-group">
-                    <label for="name-input">Name (Optional, but you can pick one!)</label>
-                    <input class="form-control" id="name-input" name="name" value="{name}"/>
+                    <input class="form-control" id="psk-input" name="psk"/>
                 </div>
                 <div class="form-group">
                     <button class="form-control btn btn-primary" id="submit">Save</button>
                 </div>
-
             </form>
         </div>
     </div>

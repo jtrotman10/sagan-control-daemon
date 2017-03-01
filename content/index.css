@@ -19,3 +19,11 @@ label {
     background: rgba(27, 42, 81, 0.3);
     color: white;
 }
+
+.list-group-item {
+    color: black;
+}
+
+.modal-title {
+    color: black;
+}
