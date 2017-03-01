@@ -238,6 +238,7 @@ class Poller:
             pass
     
     def handle_telemetry_pipe(self, socket, FIFO):
+
         while True:
             result = ""
             chr = FIFO.read(1)
@@ -288,6 +289,7 @@ class Poller:
         try:
             self.FIFO = open(_TELEMETRY_PIPE_PATH, 'r')
         except FileNotFoundError:
+            print("FIFO NOT FOUND")
             emit(self.socket, 'error', "sagan telemetry configuration error")
 
         # create experiment log file
