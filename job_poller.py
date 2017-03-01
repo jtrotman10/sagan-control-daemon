@@ -239,11 +239,11 @@ class Poller:
     
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
-            if os.environ['CLOSE_FIFO'] == '1':
-                print("CLOSING TELEMETRY THREAD")
-                break
             try:
                 result = FIFO.readline()
+            except OSError:
+                print("(read EOF from FIFO) CLOSING TELEMETRY THREAD")
+                break
             except ValueError:
                 continue
             if result != "":
@@ -255,8 +255,11 @@ class Poller:
                         }
                     }
                     socket.send(json.dumps(payload))
-                except:
-                    continue
+                except (BrokenPipeError, WebSocketConnectionClosedException):
+                    print("(could not write to socket )CLOSING TELEMETRY THREAD")
+                    break
+
+
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
@@ -321,11 +324,9 @@ class Poller:
 
     def end_experiment(self):
         self.out_thread.join()
-        self.socket.close()
-
-        os.environ['CLOSE_FIFO'] = '1'
-        self.FIFO.close()
         self.fifo_thread.join()
+        self.FIFO.close()
+        self.socket.close()
         self.socket.keep_running = False
         self.post_results()
         self.experiment_process = None
