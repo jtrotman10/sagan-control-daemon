@@ -240,6 +240,7 @@ class Poller:
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
             result = FIFO.readline()
+            print("TELEMETRY RECIEVED FROM SAGAN LIBS <{}>".format(result))
             emit(socket, "telem", result)
 
     def start_experiment(self, experiment):
