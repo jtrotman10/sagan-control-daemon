@@ -237,13 +237,13 @@ class Poller:
         else:
             pass
     
-    def handle_telemetry_pipe(self, FIFO):
+    def handle_telemetry_pipe(self, socket, FIFO):
         while True:
             result = FIFO.readline()
             if result != "":
                 print("TELEMETRY RECIEVED FROM SAGAN LIBS <{}>".format(result))
                 payload = str("{\"a\":{\"0\":\"" + "telem" + "\",\"1\":\"" + str(result.encode("utf8"))[2:-1] + "\"}}")
-                self.socket.send(payload)
+                socket.send(payload)
                 print("send payload <{}>".format(payload))
 
     def start_experiment(self, experiment):
@@ -285,6 +285,7 @@ class Poller:
         self.fifo_thread = Thread(
             target=self.handle_telemetry_pipe,
             args=(
+                self.socket,
                 self.FIFO
             )
         )
