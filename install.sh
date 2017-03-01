@@ -22,12 +22,17 @@ if [ ! -e leds ]; then
 fi
 sudo chown pi:pi leds
 
+# Set up start up script
 sudo cp rc_local.txt /etc/rc.local
 sudo chmod +x /etc/rc.local
 sudo chmod +x run.sh
 sudo chmod +x run-notifier.sh
+
 sudo cp hostapd.conf /etc/hostapd/
 sudo cp init.d_hostapd /etc/init.d/hostapd
+
 sudo cp dnsmasq.conf /etc/
+sudo cp hosts /etc/
+
 sudo systemctl daemon-reload
 
