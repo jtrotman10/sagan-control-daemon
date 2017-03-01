@@ -238,27 +238,9 @@ class Poller:
             pass
     
     def handle_telemetry_pipe(self, socket, FIFO):
-
         while True:
-            result = ""
-            chr = FIFO.read(1)
-            result += chr
-            print("telem <" + result + ">")
-            while chr != '\n':
-                chr = FIFO.read(1)
-                result += chr
-                print("telem <" + result + ">")
+            result = FIFO.readline()
             emit(socket, "telem", result)
-            print("telem sent")
-
-    # def open_fifo(self):
-    #     for _ in range(3):
-    #         try:
-    #             file = open(_TELEMETRY_PIPE_PATH, 'r', 0)
-    #             return file
-    #         except:
-    #             time.sleep(0.01)
-    #     raise FileNotFoundError
 
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
