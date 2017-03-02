@@ -5,7 +5,7 @@
 window.onload = function () {
     var context = JSON.parse($('#data').text());
     var networks = context.networks.split(',');
-    var paired = !!context.paired;
+    var paired = context.paired === '0';
     var error = context.error;
     networks.forEach(function (network) {
         var networkElem = $(document.createElement('li'));
