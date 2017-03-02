@@ -239,7 +239,7 @@ class SaganController(StateMachine):
         except CalledProcessError:
             self.trigger('halt')
             return
-
+        print('Visible APs: {}'.format(ap_list))
         process_args = [
             sys.executable,
             'server.py',
