@@ -108,6 +108,7 @@ class Poller:
         self.host = host
         self.out_thread = None
         self.run_job = None
+        self.using_sagan = False
         self.socket_thread = None
         self.out_log = None
         self.experiment_process = None  # type: Popen
@@ -227,10 +228,16 @@ class Poller:
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
+        self.using_sagan = False
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
     def start_experiment_proc(self, experiment):
+
+        if "from sagan import *" in experiment['code_strong'] or "import sagan" in experiment['code_string']:
+            print("(start_experiment_proc) - experiment uses sagan")
+            self.using_sagan = True
+
         with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
@@ -353,11 +360,12 @@ class Poller:
     def end_experiment(self):
         self.out_thread.join()
 
-        # ensure fifo is not hanging
-        print("(end_experiment) opening fifo incase of sagan not used")
-        fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
-        fifo_file.close()
-        print("(end_experiment) finished fifo quick open/close")
+        if not self.using_sagan:
+            # ensure fifo is not hanging
+            print("(end_experiment) opening fifo incase of sagan not used")
+            fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
+            fifo_file.close()
+            print("(end_experiment) finished fifo quick open/close")
 
         self.fifo_thread.join()
         print("(end_experiment) fifo thread joined")
@@ -373,8 +381,6 @@ class Poller:
         self.socket.close()
         print("(end_experiment) socket closed")
         print('(end_experiment) Job finished.')
-
-
 
     def run_experiment(self):
         try:
