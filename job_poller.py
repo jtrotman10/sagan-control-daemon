@@ -255,7 +255,7 @@ class Poller:
                     payload = {
                         "a": {
                             "0": "telem",
-                            "1": result
+                            "1": {result[:3]: result[4:].strip()}
                         }
                     }
                     socket.send(json.dumps(payload))
