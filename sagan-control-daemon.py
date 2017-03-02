@@ -170,7 +170,7 @@ class SaganController(StateMachine):
         'psk': '',
         'host': 'http://launchpad.cuberider.com',
         'interface': 'wlan0',
-        'user': 'remote-experiments',
+        'user': 'pi',
         'error': ''
     }
 
