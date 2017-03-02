@@ -258,6 +258,7 @@ class Poller:
                             "1": {result[:3]: result[4:].strip()}
                         }
                     }
+                    print("writing telemetry")
                     socket.send(json.dumps(payload))
                 except (BrokenPipeError, WebSocketConnectionClosedException):
                     continue
