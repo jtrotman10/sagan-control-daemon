@@ -258,7 +258,15 @@ class Poller:
         else:
             pass
 
-    def handle_telemetry_pipe(self, socket, FIFO):
+    def handle_telemetry_pipe(self, socket, _FIFO_PATH):
+        FIFO = None
+        try:
+            FIFO = open(_FIFO_PATH, 'r')
+            print("FOUND FIFO")
+        except FileNotFoundError:
+            print("FIFO NOT FOUND")
+            emit(socket, 'error', "sagan telemetry configuration error")
+
         while True:
             try:
                 result = FIFO.readline()
@@ -309,12 +317,7 @@ class Poller:
         self.start_experiment_proc(experiment)
 
         # open file to write to
-        try:
-            self.FIFO = open(_TELEMETRY_PIPE_PATH, 'r')
-            print("FOUND FIFO")
-        except FileNotFoundError:
-            print("FIFO NOT FOUND")
-            emit(self.socket, 'error', "sagan telemetry configuration error")
+
 
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
@@ -323,7 +326,7 @@ class Poller:
             target=self.handle_telemetry_pipe,
             args=(
                 self.socket,
-                self.FIFO
+                _TELEMETRY_PIPE_PATH
             )
         )
         self.fifo_thread.start()
@@ -345,6 +348,10 @@ class Poller:
 
     def end_experiment(self):
         self.out_thread.join()
+        # ensure fifo is not hanging
+        fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
+        fifo_file.close()
+
         self.fifo_thread.join()
         self.socket.keep_running = False
         self.post_results()
@@ -354,6 +361,8 @@ class Poller:
         self.leds_lock.release()
         self.socket.close()
         print('Job finished.')
+
+
 
     def run_experiment(self):
         try:
