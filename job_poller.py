@@ -236,6 +236,7 @@ class Poller:
 
         env = os.environ.copy()
         env['PATH'] += ':/home/pi/Documents/cuberider/'
+        env['TELEMETRY'] = '1'
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
