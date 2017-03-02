@@ -255,7 +255,7 @@ class Poller:
                     payload = {
                         "a": {
                             "0": "telem",
-                            "1": str(result.encode("utf8"))[2:-1]
+                            "1": result
                         }
                     }
                     socket.send(json.dumps(payload))
