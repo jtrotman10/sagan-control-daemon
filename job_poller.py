@@ -260,9 +260,7 @@ class Poller:
                     }
                     socket.send(json.dumps(payload))
                 except (BrokenPipeError, WebSocketConnectionClosedException):
-                    FIFO.close()
-                    print("(could not write to socket) CLOSING TELEMETRY THREAD")
-                    break
+                    continue
             else:
                 print("(EOF) CLOSING TELEMETRY THREAD")
                 FIFO.close()
