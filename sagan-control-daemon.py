@@ -77,7 +77,16 @@ ap_list_re = compile(r'SSID: ([^\n]*)')
 
 
 def ap_scan(interface):
-    output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'])
+    retry_count = 0
+    while retry_count < 3:
+        try:
+            output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'])
+            break
+        except CalledProcessError:
+            retry_count += 1
+    else:
+        return []
+
     output = decode(output)
     results = set()
     for result in ap_list_re.finditer(output):
