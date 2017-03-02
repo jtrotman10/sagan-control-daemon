@@ -170,7 +170,8 @@ class SaganController(StateMachine):
         'psk': '',
         'host': 'http://launchpad.cuberider.com',
         'interface': 'wlan0',
-        'user': 'remote-experiments'
+        'user': 'remote-experiments',
+        'error': ''
     }
 
     def save_config(self):
@@ -248,6 +249,12 @@ class SaganController(StateMachine):
             ','.join(ap_list)
         ]
 
+        if self.config['error'] != '':
+            process_args += [
+                'error',
+                self.config['error']
+            ]
+
         if self.config['device_id']:
             process_args += ['paired', '1']
         self.server = Popen(process_args, stdout=PIPE)
@@ -291,42 +298,49 @@ class SaganController(StateMachine):
             self.trigger('wifi_connection_failure')
 
     def attempting_wifi_connection_wifi_connection_success(self):
+        self.config['error'] = ''
         self.save_config()
 
     def attempting_wifi_connection_wifi_connection_failure(self):
-        pass
+        self.config['error'] = 'Could not connect to the wifi network.'
+        self.save_config()
 
     def attempting_wifi_connection_halt(self):
         pass
 
     def pairing(self):
-        try:
-            result = post(
-                '{}/dispatch/devices/'.format(self.config['host']),
-                {
-                    'code': self.config['pairing_code'],
-                    'name': self.config['device_name']
-                }
-            )
-            if result.status_code != 201:
+        if self.config['device_id'] == '':
+            try:
+                result = post(
+                    '{}/dispatch/devices/'.format(self.config['host']),
+                    {
+                        'code': self.config['pairing_code'],
+                        'name': self.config['device_name']
+                    }
+                )
+                if result.status_code != 201:
+                    self.trigger('pairing_failure')
+                else:
+                    device = result.json()
+                    self.config['device_id'] = device['id']
+                    self.config['device_name'] = device['name']
+                    self.save_config()
+                    self.trigger('pairing_success')
+            except (KeyError):
                 self.trigger('pairing_failure')
-            else:
-                device = result.json()
-                self.config['device_id'] = device['id']
-                self.config['device_name'] = device['name']
-                self.save_config()
-                self.trigger('pairing_success')
-        except (KeyError):
-            self.trigger('pairing_failure')
+        else:
+            self.trigger('pairing_success')
 
     def pairing_halt(self):
         pass
 
     def pairing_pairing_failure(self):
-        pass
+        self.config['error'] = 'Could not pair with the give code.'
+        self.save_config()
 
     def pairing_pairing_success(self):
-        pass
+        self.config['error'] = ''
+        self.save_config()
 
     def polling_for_work(self):
         self.set_leds('g')
@@ -344,9 +358,16 @@ class SaganController(StateMachine):
             ])
         except CalledProcessError as error:
             if error.returncode == 1:
+                self.config['error'] = 'Could not connect to the internet over the Wifi network selected.'
+                self.trigger('network_failure')
+            elif error.returncode == 2:
+                self.config['error'] = 'Device not paired with Launchpad.'
+                self.config['device_id'] = ''
+                self.config['device_name'] = ''
                 self.trigger('network_failure')
             else:
                 self.trigger('halt')
+            self.save_config()
 
     def polling_for_work_network_failure(self):
         pass

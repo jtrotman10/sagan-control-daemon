@@ -3,7 +3,7 @@
 from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
 from websocket import WebSocketConnectionClosedException
 from requests.exceptions import ConnectionError
-from threading import Thread, Event
+from threading import Thread, Event, RLock
 from requests import get, put, post
 from codecs import decode
 from time import sleep
@@ -16,11 +16,13 @@ import os
 
 _current_poller = None
 _TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
+
+
 # --------------- web socket event handlers -------------------------
 
 
 def emit(ws, channel, message):
-    payload = str("{\"a\":{\"0\":\""+channel+"\",\"1\":\""+str(message.encode("utf8"))[2:-1]+"\"}}")
+    payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
     ws.send(payload)
 
 
@@ -34,6 +36,7 @@ def on_close(ws):
 
 def on_open(ws):
     print("### web socket opened ###")
+
 
 # --------------- end web socket event handlers -------------------------
 
@@ -69,17 +72,29 @@ def process_error(out_stream, socket, log_stream):
             break
 
 
-def heart_beat(url, heart_beat_time, stop_trigger: Event):
+def heart_beat(url):
+    response = put(url, {})
+    return response.status_code in {200, 204}
+
+
+def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
     retry_count = 0
     while not stop_trigger.is_set():
         try:
-            response = put(url, {})
-            if response.status_code not in (200, 204):
-                exit(1)
+            if not heart_beat(url):
+                exit(2)
+            if leds_lock.acquire(blocking=False):
+                leds.write('g\n')
+                leds.flush()
+                leds_lock.release()
         except ConnectionError:
             if retry_count > 3:
                 exit(1)
             else:
+                if leds_lock.acquire(blocking=False):
+                    leds.write('r\n')
+                    leds.flush()
+                    leds_lock.release()
                 sleep(10)
                 retry_count += 1
         else:
@@ -114,37 +129,40 @@ class Poller:
             'termination_requested': self.kill_subproc
         }
         self.leds_file = leds
+        self.leds_lock = RLock()
         if not leds:
             self.leds_file = open('/dev/null', 'w')
 
     def set_leds(self, cmd):
-        self.leds_file.write(cmd + '\n')
-        self.leds_file.flush()
+        with self.leds_lock:
+            self.leds_file.write(cmd + '\n')
+            self.leds_file.flush()
 
     def go(self):
+        self.set_leds('~')
         print('Device id: {}'.format(self.device_id))
         print('Awaiting work.')
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
-        self.set_leds('g')
         stop_event = Event()
-        heart_beat_thread = Thread(target=heart_beat, args=(url, 5, stop_event))
+        heart_beat_thread = Thread(target=heart_beat_loop, args=(url, 5, stop_event, self.leds_file, self.leds_lock))
         heart_beat_thread.start()
         retry_count = 0
-        while self.state is not 'exit':
-            try:
-                self.state_machine[self.state]()
-            except ConnectionError as error:
-                print(error)
-                if retry_count > 3:
-                    exit(1)
+        try:
+            while self.state is not 'exit':
+                try:
+                    self.state_machine[self.state]()
+                except ConnectionError as error:
+                    print(error)
+                    if retry_count > 3:
+                        exit(1)
+                    else:
+                        sleep(10)
+                        retry_count += 1
+                        continue
                 else:
-                    sleep(10)
-                    retry_count += 1
-                    continue
-            except KeyboardInterrupt:
-                self.state = 'exit'
-            else:
-                retry_count = 0
+                    retry_count = 0
+        except KeyboardInterrupt:
+            self.state = 'exit'
 
         if self.experiment_process:
             self.kill_subproc()
@@ -236,7 +254,7 @@ class Poller:
             self.handle_stdin(payload[1])
         else:
             pass
-    
+
     def handle_telemetry_pipe(self, socket, FIFO):
         while True:
             try:
@@ -266,11 +284,11 @@ class Poller:
                 FIFO.close()
                 break
 
-
-
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
+        self.leds_lock.acquire()
         self.set_leds('n')
+
         self.clean_sandbox()
 
         # connect the socket
@@ -336,6 +354,7 @@ class Poller:
         self.experiment_process = None
         self.clean_sandbox()
         self.set_leds('g')
+        self.leds_lock.release()
         self.socket.close()
         print('Job finished.')
 
