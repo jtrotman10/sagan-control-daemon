@@ -274,10 +274,12 @@ class Poller:
             except OSError:
                 print("(OSError) CLOSING TELEMETRY THREAD")
                 FIFO.close()
+                print("FIFO CLOSED")
                 break
             except ValueError:
                 print("(ValueError) CLOSING TELEMETRY THREAD")
                 FIFO.close()
+                print("FIFO CLOSED")
                 pass
 
             if result != "":
@@ -294,6 +296,7 @@ class Poller:
             else:
                 print("(EOF) CLOSING TELEMETRY THREAD")
                 FIFO.close()
+                print("FIFO CLOSED")
                 break
 
     def start_experiment(self, experiment):
@@ -349,19 +352,27 @@ class Poller:
 
     def end_experiment(self):
         self.out_thread.join()
+
         # ensure fifo is not hanging
+        print("(end_experiment) opening fifo incase of sagan not used")
         fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
         fifo_file.close()
+        print("(end_experiment) finished fifo quick open/close")
 
         self.fifo_thread.join()
+        print("(end_experiment) fifo thread joined")
         self.socket.keep_running = False
         self.post_results()
+        print("(end_experiment) posted results")
         self.experiment_process = None
         self.clean_sandbox()
+        print("(end_experiment) cleaned sandbox")
         self.set_leds('g')
         self.leds_lock.release()
+        print("(end_experiment) closing socket")
         self.socket.close()
-        print('Job finished.')
+        print("(end_experiment) socket closed")
+        print('(end_experiment) Job finished.')
 
 
 
