@@ -6,7 +6,8 @@ import sys
 import os
 
 from os.path import isfile
-from subprocess import check_call, Popen, CalledProcessError, PIPE, TimeoutExpired
+from subprocess import check_call, check_output, Popen, CalledProcessError, PIPE, TimeoutExpired
+from re import compile
 
 from requests.api import post
 
@@ -70,6 +71,21 @@ class StateMachine:
 
             if self._state is 'halted':
                 return
+
+
+ap_list_re = compile(r'SSID: ([^\n]*)')
+
+
+def ap_scan(interface):
+    output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'])
+    output = decode(output)
+    results = set()
+    for result in ap_list_re.finditer(output):
+        ssid = result.group(1).strip()
+        if len(ssid) > 0:
+            results.add(ssid)
+
+    return list(results)
 
 
 class SaganController(StateMachine):
@@ -208,7 +224,24 @@ class SaganController(StateMachine):
         check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
 
     def serving_config_page(self):
-        self.server = Popen([sys.executable, 'server.py', '0.0.0.0', '80'], stdout=PIPE)
+        try:
+            ap_list = ap_scan(self.config['interface'])
+        except CalledProcessError:
+            self.trigger('halt')
+            return
+
+        process_args = [
+            sys.executable,
+            'server.py',
+            '0.0.0.0',
+            '80',
+            'networks',
+            ','.join(ap_list)
+        ]
+
+        if self.config['device_id']:
+            process_args += ['paired', '1']
+        self.server = Popen(process_args, stdout=PIPE)
         lines = [decode(self.server.stdout.readline()) for _ in range(5)]
         if lines[4] != '\n':
             self.trigger('halt')
