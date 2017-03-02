@@ -308,12 +308,6 @@ class Poller:
         )
         self.start_experiment_proc(experiment)
 
-        # create the rendezvous point
-        try:
-            os.mkfifo(_TELEMETRY_PIPE_PATH)
-        except FileExistsError:
-            pass
-
         # open file to write to
         try:
             self.FIFO = open(_TELEMETRY_PIPE_PATH, 'r')

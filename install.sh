@@ -25,6 +25,12 @@ sudo chown ${user}:${user} sandbox
 if [ ! -e leds ]; then
     sudo mkfifo leds
 fi
+
+if [ ! -e /tmp/sagan_telemetry ]; then
+    sudo mkfifo /tmp/sagan_telemetry
+    chmod 777 /tmp/sagan_telemetry
+fi
+
 sudo chown ${user}:${user} leds
 
 # Set up start up script
