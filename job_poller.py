@@ -172,7 +172,10 @@ class Poller:
 
     def check_for_jobs(self):
         url = '{0}/dispatch/devices/{1}/queue'.format(self.host, self.device_id)
-        jobs = [job for job in get(url).json() if job['state'] == 0]
+        result = get(url)
+        if result.status_code != 200:
+            exit(2)
+        jobs = [job for job in result.json() if job['state'] == 0]
         if len(jobs) > 0:
             next_job = jobs[0]
             print('Found job id {}, fetching experiment.'.format(next_job['id']))
