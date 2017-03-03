@@ -270,6 +270,7 @@ class SaganController(StateMachine):
         self.server.terminate()
         try:
             self.server.wait(10)
+            self.set_leds('~')
             check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
             self.trigger('received_new_config')
         except (TimeoutExpired, CalledProcessError):
@@ -343,7 +344,6 @@ class SaganController(StateMachine):
         self.save_config()
 
     def polling_for_work(self):
-        self.set_leds('g')
         try:
             check_call([
                 '/usr/bin/sudo',
