@@ -120,6 +120,7 @@ class Poller:
         self.telemetry_pipe = None
         self.stdout_text = b''
         self.stderr_text = b''
+        self.socket_close_socket = True
         self.state = 'polling'
         self.process_is_running = True
         self.state_machine = {
@@ -136,7 +137,7 @@ class Poller:
         print("### web socket closed ###")
         if self.process_is_running:
             print("[websocket on_close] process is running, attempting to reconnect")
-            self.reconnect_socket()
+            # todo - reconnect
 
         else:
             print("[websocket on_close] websocket closed")
@@ -237,6 +238,7 @@ class Poller:
         files = os.listdir(path='.')
         print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
+        self.socket_close_socket = True
         print("self.using_sagan is now "+str(self.using_sagan))
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
@@ -326,12 +328,20 @@ class Poller:
                 print("FIFO CLOSED")
                 break
 
-    def reconnect_socket(self):
-        print("[reconnect socket] joining socket thread")
-        self.socket.keep_running = False
+    def run_socket_forever(self):
+        while True:
+            self.socket.keep_running = True
+            self.socket.run_forever()
+            if self.socket_close_socket:
+                self.socket.keep_running = False
+                break
+            else:
+                print("[run_socket_forever] restarting socket runner")
+
+    def disconnect_socket(self):
+        self.socket_close_socket = True
+        self.socket.close()
         self.socket_thread.join()
-        print("[reconnect socket] old thread joined")
-        self.connect_socket()
 
     def connect_socket(self):
         # connect to the websocket
@@ -344,8 +354,7 @@ class Poller:
             on_open=on_open
         )
         self.socket.keep_running = True
-        self.socket_thread = Thread(target=self.socket.run_forever)
-        self.socket_thread.daemon = True
+        self.socket_thread = Thread(target=self.run_socket_forever)  # todo
         self.socket_thread.start()
         print("[connect socket] socket thread running")
 
@@ -360,14 +369,11 @@ class Poller:
         self.ip = (self.socket_url.split(":")[1])[2:]
         self.port = self.socket_url.split(":")[1]
 
+        self.socket_close_socket = False
         self.connect_socket()
-
 
         self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
-
-        # open file to write to
-
 
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
@@ -417,10 +423,9 @@ class Poller:
         self.leds_lock.release()
         print("(end_experiment) closing socket")
         self.process_is_running = False
-        self.socket.close()
+        self.disconnect_socket()
         print("(end_experiment) socket closed")
         print('(end_experiment) Job finished.')
-
 
     def run_experiment(self):
         try:
