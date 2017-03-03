@@ -14,4 +14,4 @@ while true; do
     sleep 10s
 done
 
-rm pid
+rm run.pid
