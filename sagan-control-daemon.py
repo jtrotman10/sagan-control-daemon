@@ -187,7 +187,7 @@ class SaganController(StateMachine):
                 self.config.update(json.load(f))
 
     def check_config(self):
-        required_fields = ['pairing_code', 'device_id']
+        required_fields = ['device_id']
         return all(self.config.get(field, None) for field in required_fields)
 
     def set_leds(self, cmd):
