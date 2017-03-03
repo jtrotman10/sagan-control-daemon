@@ -120,7 +120,7 @@ class Poller:
         self.telemetry_pipe = None
         self.stdout_text = b''
         self.stderr_text = b''
-        self.socket_close_socket = True
+        self.socket_close_socket = None  # type: Event
         self.state = 'polling'
         self.process_is_running = True
         self.state_machine = {
@@ -238,7 +238,7 @@ class Poller:
         files = os.listdir(path='.')
         print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
-        self.socket_close_socket = True
+        self.socket_close_socket = None
         print("self.using_sagan is now "+str(self.using_sagan))
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
@@ -329,17 +329,13 @@ class Poller:
                 break
 
     def run_socket_forever(self):
-        while True:
+        while not self.socket_close_socket.is_set():
             self.socket.keep_running = True
             self.socket.run_forever()
-            if self.socket_close_socket:
-                self.socket.keep_running = False
-                break
-            else:
-                print("[run_socket_forever] restarting socket runner")
+            print("[run_socket_forever] restarting socket runner")
 
     def disconnect_socket(self):
-        self.socket_close_socket = True
+        self.socket_close_socket.set()
         self.socket.close()
         self.socket_thread.join()
 
@@ -369,7 +365,7 @@ class Poller:
         self.ip = (self.socket_url.split(":")[1])[2:]
         self.port = self.socket_url.split(":")[1]
 
-        self.socket_close_socket = False
+        self.socket_close_socket = Event()
         self.connect_socket()
 
         self.check_sagan_usage(experiment)
