@@ -231,7 +231,7 @@ class Poller:
         files = os.listdir(path='.')
         print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
-        print("self.using_sagan is now "+self.using_sagan)
+        print("self.using_sagan is now "+str(self.using_sagan))
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
@@ -246,7 +246,7 @@ class Poller:
         else:
             self.using_sagan = False
 
-        print("using_sagan has been set to "+self.using_sagan)
+        print("using_sagan has been set to "+str(self.using_sagan))
         with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
