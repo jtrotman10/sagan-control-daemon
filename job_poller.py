@@ -235,6 +235,9 @@ class Poller:
 
     def start_experiment_proc(self, experiment):
         pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
+        match=pattern.match(experiment['code_string'])
+        print(match)
+        print(type(match))
         if pattern.match(experiment['code_string']) is not None:
             print("(start_experiment_proc) - experiment uses sagan")
             self.using_sagan = True
