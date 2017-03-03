@@ -136,6 +136,8 @@ class Poller:
         print("### web socket closed ###")
         if self.process_is_running:
             print("[websocket on_close] process is running, attempting to reconnect")
+            self.reconnect_socket()
+
         else:
             print("[websocket on_close] websocket closed")
 
@@ -324,6 +326,29 @@ class Poller:
                 print("FIFO CLOSED")
                 break
 
+    def reconnect_socket(self):
+        print("[reconnect socket] joining socket thread")
+        self.socket.keep_running = False
+        self.socket_thread.join()
+        print("[reconnect socket] old thread joined")
+        self.connect_socket()
+
+    def connect_socket(self):
+        # connect to the websocket
+        print("[connect socket] creating socket thread")
+        self.socket = websocket.WebSocketApp(
+            self.socket_url,
+            on_message=self.on_message,
+            on_error=on_error,
+            on_close=self.on_close,
+            on_open=on_open
+        )
+        self.socket.keep_running = True
+        self.socket_thread = Thread(target=self.socket.run_forever)
+        self.socket_thread.daemon = True
+        self.socket_thread.start()
+        print("[connect socket] socket thread running")
+
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
         self.leds_lock.acquire()
@@ -335,14 +360,9 @@ class Poller:
         self.ip = (self.socket_url.split(":")[1])[2:]
         self.port = self.socket_url.split(":")[1]
 
-        # connect to the websocket
-        self.socket = websocket.WebSocketApp(
-            self.socket_url,
-            on_message=self.on_message,
-            on_error=on_error,
-            on_close=self.on_close,
-            on_open=on_open
-        )
+        self.connect_socket()
+
+
         self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
 
@@ -370,10 +390,7 @@ class Poller:
             )
         )
         self.out_thread.start()
-        self.socket.keep_running = True
-        self.socket_thread = Thread(target=self.socket.run_forever)
-        self.socket_thread.daemon = True
-        self.socket_thread.start()
+
         print('Experiment setup complete.')
 
     def end_experiment(self):
