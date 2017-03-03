@@ -24,6 +24,8 @@ window.onload = function () {
         $('#code-input-group').hide();
         $('#name-input-group').hide();
     }
+
+    $('.container').css('display', 'block');
 };
 
 function selectNetwork() {
