@@ -13,6 +13,7 @@ import time
 import json
 import sys
 import os
+import re
 
 _current_poller = None
 _TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
@@ -233,8 +234,8 @@ class Poller:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
     def start_experiment_proc(self, experiment):
-
-        if "from sagan import *" in experiment['code_strong'] or "import sagan" in experiment['code_string']:
+        pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
+        if pattern.match(experiment['code_string'] is not None:
             print("(start_experiment_proc) - experiment uses sagan")
             self.using_sagan = True
 
