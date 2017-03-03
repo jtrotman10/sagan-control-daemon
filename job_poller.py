@@ -413,7 +413,6 @@ class Poller:
 
         self.fifo_thread.join()
         print("(end_experiment) fifo thread joined")
-        self.socket.keep_running = False
         self.post_results()
         print("(end_experiment) posted results")
         self.experiment_process = None
