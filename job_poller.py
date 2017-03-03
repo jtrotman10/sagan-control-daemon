@@ -229,7 +229,7 @@ class Poller:
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
-        self.using_sagan = False
+
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
@@ -364,6 +364,7 @@ class Poller:
         print('Experiment setup complete.')
 
     def end_experiment(self):
+        print("END EXPERIMENT FUNCTION CALLED")
         self.out_thread.join()
 
         if self.using_sagan == False:
