@@ -1,4 +1,3 @@
 #!/bin/bash
 printf "Enabling remote experiments"
-/opt/sagan-control-daemon/run-notifier.sh &
-/opt/sagan-control-daemon/run.sh &
+/opt/sagan-control-daemon/start.sh

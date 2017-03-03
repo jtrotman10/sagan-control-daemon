@@ -235,11 +235,11 @@ class Poller:
             print("Failed to notify server that job finished")
 
     def clean_sandbox(self):
-        files = os.listdir(path='.')
         print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
         self.socket_close_socket = None
         print("self.using_sagan is now "+str(self.using_sagan))
+        files = os.listdir(path='.')
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
@@ -331,6 +331,7 @@ class Poller:
     def run_socket_forever(self):
         while not self.socket_close_socket.is_set():
             self.socket.keep_running = True
+            print("beginning run_socket_forever")
             self.socket.run_forever()
             print("[run_socket_forever] restarting socket runner")
 
@@ -338,6 +339,7 @@ class Poller:
         self.socket_close_socket.set()
         self.socket.close()
         self.socket_thread.join()
+        print('socket_thread joined')
 
     def connect_socket(self):
         # connect to the websocket
@@ -412,15 +414,15 @@ class Poller:
         self.socket.keep_running = False
         self.post_results()
         print("(end_experiment) posted results")
-        self.experiment_process = None
-        self.clean_sandbox()
-        print("(end_experiment) cleaned sandbox")
         self.set_leds('g')
         self.leds_lock.release()
         print("(end_experiment) closing socket")
         self.process_is_running = False
         self.disconnect_socket()
         print("(end_experiment) socket closed")
+        self.experiment_process = None
+        self.clean_sandbox()
+        print("(end_experiment) cleaned sandbox")
         print('(end_experiment) Job finished.')
 
     def run_experiment(self):
