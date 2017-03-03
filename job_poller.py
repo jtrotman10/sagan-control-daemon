@@ -363,7 +363,7 @@ class Poller:
     def end_experiment(self):
         self.out_thread.join()
 
-        if not self.using_sagan:
+        if self.using_sagan == True:
             # ensure fifo is not hanging
             print("(end_experiment) opening fifo incase of sagan not used")
             fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
