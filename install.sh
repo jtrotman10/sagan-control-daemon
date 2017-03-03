@@ -30,6 +30,8 @@ sudo chown ${user}:${user} leds
 if [ ! -e /tmp/sagan_telemetry ]; then
     sudo mkfifo /tmp/sagan_telemetry
     sudo chmod 777 /tmp/sagan_telemetry
+    sudo chown ${user}:${user} /tmp/sagan_telemetry
+
 fi
 
 # Set up start up script
