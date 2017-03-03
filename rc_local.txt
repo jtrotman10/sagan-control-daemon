@@ -1,3 +1,4 @@
 #!/bin/bash
 printf "Enabling remote experiments"
+rm /opt/sagan-control-daemon/*.pid
 /opt/sagan-control-daemon/start.sh
