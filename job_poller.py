@@ -31,10 +31,6 @@ def on_error(ws, error):
     print("### web socket error  ### {}".format(error))
 
 
-def on_close(ws):
-    print("### web socket closed ###")
-
-
 def on_open(ws):
     print("### web socket opened ###")
 
@@ -125,6 +121,7 @@ class Poller:
         self.stdout_text = b''
         self.stderr_text = b''
         self.state = 'polling'
+        self.process_is_running = True
         self.state_machine = {
             'polling': self.check_for_jobs,
             'running': self.run_experiment,
@@ -134,6 +131,13 @@ class Poller:
         self.leds_lock = RLock()
         if not leds:
             self.leds_file = open('/dev/null', 'w')
+
+    def on_close(self, ws):
+        print("### web socket closed ###")
+        if self.process_is_running:
+            print("[websocket on_close] process is running, attempting to reconnect")
+        else:
+            print("[websocket on_close] websocket closed")
 
     def set_leds(self, cmd):
         with self.leds_lock:
@@ -235,9 +239,9 @@ class Poller:
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
-    def start_experiment_proc(self, experiment):
+    def check_sagan_usage(self, experiment):
         pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
-        match=pattern.search(experiment['code_string'])
+        match = pattern.search(experiment['code_string'])
         print(match)
         print(type(match))
         if pattern.match(experiment['code_string']) != None:
@@ -247,13 +251,17 @@ class Poller:
             print("(start_experiment_proc) - does not use sagan")
             self.using_sagan = False
 
-        print("using_sagan has been set to "+str(self.using_sagan))
+        print("using_sagan has been set to " + str(self.using_sagan))
+
+    def start_experiment_proc(self, experiment):
+
         with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
         env = os.environ.copy()
         env['PATH'] += ':/home/pi/Documents/cuberider/'
         env['TELEMETRY'] = '1'
+        self.process_is_running = True
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
@@ -332,9 +340,10 @@ class Poller:
             self.socket_url,
             on_message=self.on_message,
             on_error=on_error,
-            on_close=on_close,
+            on_close=self.on_close,
             on_open=on_open
         )
+        self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
 
         # open file to write to
@@ -390,9 +399,11 @@ class Poller:
         self.set_leds('g')
         self.leds_lock.release()
         print("(end_experiment) closing socket")
+        self.process_is_running = False
         self.socket.close()
         print("(end_experiment) socket closed")
         print('(end_experiment) Job finished.')
+
 
     def run_experiment(self):
         try:
