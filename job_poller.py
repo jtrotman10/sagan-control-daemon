@@ -244,6 +244,7 @@ class Poller:
             print("(start_experiment_proc) - experiment uses sagan")
             self.using_sagan = True
         else:
+            print("(start_experiment_proc) - does not use sagan")
             self.using_sagan = False
 
         print("using_sagan has been set to "+str(self.using_sagan))
