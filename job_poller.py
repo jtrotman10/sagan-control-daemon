@@ -240,7 +240,7 @@ class Poller:
         match=pattern.search(experiment['code_string'])
         print(match)
         print(type(match))
-        if pattern.match(experiment['code_string']) is not None:
+        if pattern.match(experiment['code_string']) != None:
             print("(start_experiment_proc) - experiment uses sagan")
             self.using_sagan = True
         else:
