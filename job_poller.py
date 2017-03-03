@@ -339,7 +339,7 @@ class Poller:
                 print("[run_socket_forever] restarting socket runner")
 
     def disconnect_socket(self):
-        self.socket_close_socket = False
+        self.socket_close_socket = True
         self.socket.close()
         self.socket_thread.join()
 
