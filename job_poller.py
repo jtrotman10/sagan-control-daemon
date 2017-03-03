@@ -450,7 +450,6 @@ class Poller:
                 self.experiment_process.wait(timeout=10)
             except TimeoutExpired:
                 print('WARNING: Experiment failed to stop.')
-        self.post_results()
         self.end_experiment()
         self.state = 'polling'
 
