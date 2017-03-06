@@ -16,7 +16,7 @@ import os
 import re
 
 _current_poller = None
-_TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
+_TELEMETRY_PIPE_PATH = "/opt/sagan_control_daemon/telemetry"
 
 
 # --------------- web socket event handlers -------------------------
@@ -266,7 +266,7 @@ class Poller:
 
         env = os.environ.copy()
         env['PATH'] += ':/home/pi/Documents/cuberider/'
-        env['TELEMETRY'] = '1'
+        env['TELEMETRY'] = _TELEMETRY_PIPE_PATH
         self.process_is_running = True
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],

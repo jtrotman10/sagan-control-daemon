@@ -27,10 +27,10 @@ if [ ! -e leds ]; then
 fi
 sudo chown ${user}:${user} leds
 
-if [ ! -e /tmp/sagan_telemetry ]; then
-    sudo mkfifo /tmp/sagan_telemetry
-    sudo chmod 777 /tmp/sagan_telemetry
-    sudo chown ${user}:${user} /tmp/sagan_telemetry
+if [ ! -e /opt/sagan_control_daemon/telemetry ]; then
+    sudo mkfifo /opt/sagan_control_daemon/telemetry
+    sudo chmod 777 /opt/sagan_control_daemon/telemetry
+    sudo chown ${user}:${user} /opt/sagan_control_daemon/telemetry
 
 fi
 
