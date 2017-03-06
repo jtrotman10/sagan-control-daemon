@@ -80,9 +80,9 @@ def ap_scan(interface):
     retry_count = 0
     while retry_count < 3:
         try:
-            output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'])
+            output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'], timeout=20)
             break
-        except CalledProcessError:
+        except (CalledProcessError, TimeoutExpired):
             retry_count += 1
     else:
         return []
@@ -228,7 +228,7 @@ class SaganController(StateMachine):
         pass
 
     def starting_ap_ap_started(self):
-        self.set_leds('y')
+        pass
 
     def starting_ap_halt(self):
         check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
@@ -258,6 +258,7 @@ class SaganController(StateMachine):
         if self.config['device_id']:
             process_args += ['paired', '1']
         self.server = Popen(process_args, stdout=PIPE)
+        self.set_leds('y')
         lines = [decode(self.server.stdout.readline()) for _ in range(5)]
         if lines[4] != '\n':
             self.trigger('halt')
