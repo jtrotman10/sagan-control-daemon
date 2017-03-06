@@ -223,6 +223,7 @@ class Poller:
         )
         if result.status_code != 201:
             print("Failed to upload results")
+            return
         result = put(
             '{0}/dispatch/jobs/{1}/finish'.format(self.host, self.run_job),
             {
