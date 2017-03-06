@@ -63,14 +63,17 @@ class StateMachine:
 
     def run(self):
         while True:
-            print('state {}'.format(self._state))
-            self.dispatch_state(self._state)
-            if self._next_state is not None:
-                self._state = self._next_state
-                self._next_state = None
+            try:
+                print('state {}'.format(self._state))
+                self.dispatch_state(self._state)
+                if self._next_state is not None:
+                    self._state = self._next_state
+                    self._next_state = None
 
-            if self._state is 'halted':
-                return
+                if self._state is 'halted':
+                    return
+            except KeyboardInterrupt:
+                self.trigger('halt')
 
 
 ap_list_re = compile(r'SSID: ([^\n]*)')
