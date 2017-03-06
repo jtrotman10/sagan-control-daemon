@@ -9,4 +9,3 @@ if [ -e run-notifier.pid ]; then
     rm run-notifier.pid
 fi
 killall python
-./stop-ap.sh wlan0
