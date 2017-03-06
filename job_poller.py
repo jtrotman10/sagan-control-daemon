@@ -165,8 +165,9 @@ class Poller:
                     if retry_count > 3:
                         exit(1)
                     else:
-                        sleep(10)
+                        print('Connection error, retrying ({}).'.format(retry_count))
                         retry_count += 1
+                        sleep(10)
                         continue
                 else:
                     retry_count = 0
