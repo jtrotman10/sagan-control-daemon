@@ -19,13 +19,6 @@ _current_poller = None
 _TELEMETRY_PIPE_PATH = "/tmp/sagan_telemetry"
 
 
-# --------------- web socket event handlers -------------------------
-
-
-def emit(ws, channel, message):
-    payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
-    ws.send(payload)
-
 # --------------- end web socket event handlers -------------------------
 
 
@@ -39,7 +32,7 @@ def process_read(out_stream, socket, log_stream):
             break
         try:
             print("socket emit (stdout) <{}>".format(data.decode("utf8")))
-            emit(socket, "stdout", data.decode("utf8"))
+            socket.emit("stdout", data.decode("utf8"))
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
             break
@@ -54,7 +47,7 @@ def process_error(out_stream, socket, log_stream):
         if data == b'':
             break
         try:
-            emit(socket, 'stder', decode(data))
+            socket.emit('stder', decode(data))
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
             break
@@ -120,6 +113,10 @@ class Socket:
 
     def close(self):
         self.running = False
+
+    def emit(self, channel, message):
+        payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
+        self.socket.send(payload)
 
     def dispatch_run_thread(self):
         print("### forcing close old socket ###")
@@ -329,7 +326,7 @@ class Poller:
             print("FOUND FIFO")
         except FileNotFoundError:
             print("FIFO NOT FOUND")
-            emit(socket, 'error', "sagan telemetry configuration error")
+            socket.emit('error', "sagan telemetry configuration error")
 
         while True:
             try:
