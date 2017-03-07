@@ -16,7 +16,7 @@ import os
 import re
 
 _current_poller = None
-_TELEMETRY_PIPE_PATH = "/opt/sagan_control_daemon/telemetry"
+_TELEMETRY_PIPE_PATH = "/opt/sagan-control-daemon/telemetry"
 
 
 # --------------- web socket event handlers -------------------------
