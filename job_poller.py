@@ -104,7 +104,7 @@ class Socket:
         )
         self.socket.on_open = self.on_open
         self.socket.keep_running = True
-        self.wst = Thread(target=self.ws.run_forever)
+        self.wst = Thread(target=self.socket.run_forever)
         self.wst.daemon = True
         self.wst.start()
         self.socket.run_forever()
