@@ -94,6 +94,7 @@ class Socket:
     def __init__(self, **kwargs):
         self.url = kwargs.get("url")
         self.running = True
+        websocket.enableTrace(True)
         self.socket = websocket.WebSocketApp(
             self.url,
             on_message=self.on_message,
