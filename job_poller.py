@@ -124,7 +124,7 @@ class Socket:
         toRemove = []
         for i in range(len(self.buffer)):
             message = self.buffer[i]
-            if self.emit(message["channel"], message["message"]):
+            if self.emit(message["channel"], message["message"], catchup=False):
                 self.buffer.append(i)
         for index in toRemove:
             self.buffer.remove(index)
@@ -139,8 +139,9 @@ class Socket:
             return False
         return True
 
-    def emit(self, channel, message):
-        self.catchup()
+    def emit(self, channel, message, catchup=True):
+        if catchup:
+            self.catchup()
         payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
         try:
             self.socket.send(payload)
