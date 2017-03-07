@@ -42,13 +42,19 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path
-        if path == '/':
-            path = '/index.html'
 
-        if len(path) > 5 and path[-5:] == '.html':
-            self.render(path[1:])
+        if path == '/config':
+            self.render_config()
         else:
             super(Handler, self).do_GET()
+
+    def render_config(self):
+        content = dumps(_context).encode()
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.send_header("Content-Length", len(content))
+        self.end_headers()
+        self.wfile.write(content)
 
     def do_POST(self):
         content_length = self.headers.get('content-length', '0')
@@ -56,6 +62,9 @@ class Handler(SimpleHTTPRequestHandler):
         config_values = parse_qs(post_body)
         config_values = ({decode(k): decode(v[0]) for k, v in config_values.items()})
         _context.update(config_values)
+
+        self.send_response(201)
+        self.end_headers()
 
         print(_context['pairing_code'])
         print(_context['ssid'])

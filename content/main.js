@@ -2,8 +2,8 @@
  * Created by tahsmith on 1/3/17.
  */
 
-window.onload = function () {
-    var context = JSON.parse($('#data').text());
+
+function onData(context) {
     var networks = context.networks.split(',');
     var paired = context.paired !== '0';
     var error = context.error;
@@ -25,7 +25,27 @@ window.onload = function () {
         $('#name-input-group').hide();
     }
 
-    $('.container').css('display', 'block');
+    $("#content-submit").css('display', 'block');
+
+    $('#submit').click(function (event) {
+        $('#submit').addClass('disabled');
+        $.ajax({
+            url: '/',
+            data: $('#config-form').serialize(),
+            complete: function () {
+                $("#content-submit").css('display', 'none');
+                $("#content-pending").css('display', 'block');
+            },
+            dataType: 'application/x-www-form-urlencoded',
+            method: 'post'
+        });
+        event.preventDefault();
+        return false;
+    });
+}
+
+window.onload = function () {
+    $.getJSON('/config', null, onData);
 };
 
 function selectNetwork() {
