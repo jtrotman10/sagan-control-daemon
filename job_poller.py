@@ -82,6 +82,38 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
         sleep(heart_beat_time)
 
 
+def handle_telemetry_pipe(socket, _FIFO_PATH):
+    FIFO = None
+    try:
+        FIFO = open(_FIFO_PATH, 'r')
+        print("FOUND FIFO")
+    except FileNotFoundError:
+        print("FIFO NOT FOUND")
+        socket.emit('error', "sagan telemetry configuration error")
+
+    while True:
+        try:
+            result = FIFO.readline()
+        except OSError:
+            print("(OSError) CLOSING TELEMETRY THREAD")
+            FIFO.close()
+            print("FIFO CLOSED")
+            break
+        except ValueError:
+            print("(ValueError) CLOSING TELEMETRY THREAD")
+            FIFO.close()
+            print("FIFO CLOSED")
+            pass
+
+        if result != "":
+            socket.emit('telem', result.strip())
+        else:
+            print("(EOF) CLOSING TELEMETRY THREAD")
+            FIFO.close()
+            print("FIFO CLOSED")
+            break
+
+
 class Socket:
     def __init__(self, **kwargs):
         self.url = kwargs.get("url")
@@ -122,47 +154,20 @@ class Socket:
     def on_error(self, _, error):
         print("### websocket error event ###")
 
+    def on_close(self, ws):
+        print("### websocket close event ###")
+
     def close(self):
         self._stop.set()
 
-    def catchup(self):
-        toremove = []
-        for i in range(len(self.buffer)):
-            message = self.buffer[i]
-            if self.emit(message["channel"], message["message"], catchup=False):
-                print("Catchup successful for buffered message number {}".format(str(i)))
-                self.toremove.append(i)
-        for index in toremove:
-            self.buffer.remove(index)
-
-
-    def addToBuffer(self, channel, message):
-        if len(self.buffer) < self.buffer_max_size:
-            self.buffer.append({
-                "channel": channel,
-                "message": message
-            })
-            print("Adding packet to buffer, buffer size <"+str(len(self.buffer))+">")
-        else:
-            return False
-        return True
-
-    def emit(self, channel, message, catchup=True):
-        if catchup:
-            self.catchup()
+    def emit(self, channel, message):
+        print('emit {} {}'.format(channel, message))
         payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
         try:
             self.socket.send(payload)
         except (BrokenPipeError, WebSocketConnectionClosedException):
-            if not catchup:
-                buffer_add_result = self.addToBuffer(channel, message)
-                if not buffer_add_result:
-                    print("buffer full")
             return False
         return True
-
-    def on_close(self, ws):
-        print("### websocket close event ###")
 
 
 class Poller:
@@ -336,42 +341,6 @@ class Poller:
             env=env
         )
 
-    def handle_stdin(self, message):
-        self.experiment_process.stdin.write(message.encode())
-        self.experiment_process.stdin.flush()
-        self.out_log.write(message)
-
-    def handle_telemetry_pipe(self, socket, _FIFO_PATH):
-        FIFO = None
-        try:
-            FIFO = open(_FIFO_PATH, 'r')
-            print("FOUND FIFO")
-        except FileNotFoundError:
-            print("FIFO NOT FOUND")
-            socket.emit('error', "sagan telemetry configuration error")
-
-        while True:
-            try:
-                result = FIFO.readline()
-            except OSError:
-                print("(OSError) CLOSING TELEMETRY THREAD")
-                FIFO.close()
-                print("FIFO CLOSED")
-                break
-            except ValueError:
-                print("(ValueError) CLOSING TELEMETRY THREAD")
-                FIFO.close()
-                print("FIFO CLOSED")
-                pass
-
-            if result != "":
-                socket.emit('telem', result.strip())
-            else:
-                print("(EOF) CLOSING TELEMETRY THREAD")
-                FIFO.close()
-                print("FIFO CLOSED")
-                break
-
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
         self.leds_lock.acquire()
@@ -397,7 +366,7 @@ class Poller:
         self.out_log = open('experiment_log.txt', 'wb')
 
         self.fifo_thread = Thread(
-            target=self.handle_telemetry_pipe,
+            target=handle_telemetry_pipe,
             args=(
                 self.socket,
                 _TELEMETRY_PIPE_PATH
