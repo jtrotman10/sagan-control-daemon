@@ -162,7 +162,12 @@ class Socket:
 
     def emit(self, channel, message):
         print('emit {} {}'.format(channel, message))
-        payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
+        payload = json.dumps({
+            'a': {
+                '0': channel,
+                '1': message
+            }
+        })
         print(payload)
         try:
             self.socket.send(payload)
@@ -306,7 +311,7 @@ class Poller:
         files = os.listdir(path='.')
         print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
-        print("self.using_sagan is now "+str(self.using_sagan))
+        print("self.using_sagan is now " + str(self.using_sagan))
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
@@ -362,7 +367,6 @@ class Poller:
         self.socket = Socket(url=self.socket_url, stdin=self.experiment_process.stdin)
         print("socket reated")
 
-
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
 
@@ -389,7 +393,7 @@ class Poller:
 
     def end_experiment(self):
         print("END EXPERIMENT FUNCTION CALLED")
-        print("self.using_sagan is "+str(self.using_sagan))
+        print("self.using_sagan is " + str(self.using_sagan))
         self.out_thread.join()
 
         if not self.using_sagan:
