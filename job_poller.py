@@ -358,13 +358,18 @@ class Poller:
         self.leds_lock.acquire()
         self.set_leds('n')
 
-        self.clean_sandbox()
-
-        # instantiate the socket
-        self.socket = Socket(url=self.socket_url)
-
         print("code string: ")
         print(experiment['code_string'])
+
+        print("cleaning sandbox")
+        self.clean_sandbox()
+        print("sandbox clean")
+
+        # instantiate the socket
+        print("creating socket")
+        self.socket = Socket(url=self.socket_url)
+        print("socket reated")
+
         self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
 
