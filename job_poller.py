@@ -93,7 +93,7 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
 class Socket:
     def __init__(self, **kwargs):
         self.url = kwargs.get("url")
-        print("socket give url {}".format(str(url)))
+        print("socket give url {}".format(str(self.url)))
         self.running = True
         websocket.enableTrace(True)
         self.socket = websocket.WebSocketApp(
