@@ -61,7 +61,7 @@ class StateMachine:
         assert self._next_state is None
         self._next_state = self.transitions[self._state][event]
 
-    def _term(self):
+    def _term(self, signum, frame):
         print('TERM received.')
         self.trigger('halt')
 
