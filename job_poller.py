@@ -127,7 +127,7 @@ class Socket:
         print("### joining old thread run forever ###")
         self.wst.join()
         print("### creating new run thread ###")
-        self.wst = Thread(target=self.ws.run_forever)
+        self.wst = Thread(target=self.socket.run_forever)
         self.wst.daemon = True
         self.wst.start()
 
