@@ -85,6 +85,7 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
 class Socket:
     def __init__(self, **kwargs):
         self.url = kwargs.get("url")
+        self.stdin = kwargs.get("stdin")
         print("socket give url {}".format(str(self.url)))
         self.running = True
         self.socket = websocket.WebSocketApp(
@@ -95,29 +96,34 @@ class Socket:
         )
         self.socket.on_open = self.on_open
         self.socket.keep_running = True
-        self.wst = Thread(target=self.socket.run_forever)
+        self._stop = Event()
+        self.wst = Thread(target=self._run)
         self.wst.daemon = True
         self.wst.start()
         self.buffer = []
         self.buffer_max_size = 200
+
+    def _run(self):
+        while not self._stop.is_set():
+            self.socket.run_forever()
 
     def on_open(self, ws):
         print("### websocket open event ###")
 
     def on_message(self, _, message):
         print("### websocket message event ###")
-        # payload = json.loads(message)['a']
-        # payload = [payload["0"], payload["1"]]
-        # if str(payload[0]) == "stdin":
-        #     self.handle_stdin(payload[1])
-        # else:
-        #     pass
+        payload = json.loads(message)['a']
+        payload = [payload["0"], payload["1"]]
+        if str(payload[0]) == "stdin":
+            self.stdin.write(payload[1])
+        else:
+            pass
 
     def on_error(self, _, error):
         print("### websocket error event ###")
 
     def close(self):
-        self.running = False
+        self._stop.set()
 
     def catchup(self):
         toremove = []
@@ -157,8 +163,6 @@ class Socket:
 
     def on_close(self, ws):
         print("### websocket close event ###")
-        if self.running:
-           self.socket.run_forever()
 
 
 class Poller:
@@ -380,13 +384,14 @@ class Poller:
         self.clean_sandbox()
         print("sandbox clean")
 
-        # instantiate the socket
-        print("creating socket")
-        self.socket = Socket(url=self.socket_url)
-        print("socket reated")
-
         self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
+
+        # instantiate the socket
+        print("creating socket")
+        self.socket = Socket(url=self.socket_url, stdin=self.experiment_process.stdin)
+        print("socket reated")
+
 
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
