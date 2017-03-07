@@ -86,47 +86,41 @@ def handle_telemetry_pipe(socket, _FIFO_PATH):
     FIFO = None
     try:
         FIFO = open(_FIFO_PATH, 'r')
-        print("FOUND FIFO")
     except FileNotFoundError:
-        print("FIFO NOT FOUND")
         socket.emit('error', "sagan telemetry configuration error")
 
     while True:
         try:
             result = FIFO.readline()
         except OSError:
-            print("(OSError) CLOSING TELEMETRY THREAD")
             FIFO.close()
-            print("FIFO CLOSED")
             break
         except ValueError:
-            print("(ValueError) CLOSING TELEMETRY THREAD")
             FIFO.close()
-            print("FIFO CLOSED")
             pass
 
         if result != "":
             socket.emit('telem', result.strip())
         else:
-            print("(EOF) CLOSING TELEMETRY THREAD")
             FIFO.close()
-            print("FIFO CLOSED")
             break
+
+
+def check_sagan_usage(experiment):
+    pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
+    match = pattern.search(experiment['code_string'])
+    return match is not None
 
 
 class Socket:
     def __init__(self, **kwargs):
         self.url = kwargs.get("url")
         self.stdin = kwargs.get("stdin")
-        print("socket give url {}".format(str(self.url)))
         self.running = True
         self.socket = websocket.WebSocketApp(
             self.url,
             on_message=self.on_message,
-            on_error=self.on_error,
-            on_close=self.on_close,
         )
-        self.socket.on_open = self.on_open
         self.socket.keep_running = True
         self._stop = Event()
         self.wst = Thread(target=self._run)
@@ -139,11 +133,7 @@ class Socket:
         while not self._stop.is_set():
             self.socket.run_forever()
 
-    def on_open(self, ws):
-        print("### websocket open event ###")
-
     def on_message(self, _, message):
-        print("### websocket message event ###")
         payload = json.loads(message)['a']
         payload = [payload["0"], payload["1"]]
         if str(payload[0]) == "stdin":
@@ -151,24 +141,16 @@ class Socket:
         else:
             pass
 
-    def on_error(self, _, error):
-        print("### websocket error event ###")
-
-    def on_close(self, ws):
-        print("### websocket close event ###")
-
     def close(self):
         self._stop.set()
 
     def emit(self, channel, message):
-        print('emit {} {}'.format(channel, message))
         payload = json.dumps({
             'a': {
                 '0': channel,
                 '1': message
             }
         })
-        print(payload)
         try:
             self.socket.send(payload)
         except (BrokenPipeError, WebSocketConnectionClosedException):
@@ -309,23 +291,9 @@ class Poller:
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
-        print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
-        print("self.using_sagan is now " + str(self.using_sagan))
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
-
-    def check_sagan_usage(self, experiment):
-        pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
-        match = pattern.search(experiment['code_string'])
-        print(match)
-        print(type(match))
-        if match is not None:
-            print("(start_experiment_proc) - experiment uses sagan")
-            self.using_sagan = True
-        else:
-            print("(start_experiment_proc) - does not use sagan")
-            self.using_sagan = False
 
         print("using_sagan has been set to " + str(self.using_sagan))
 
@@ -352,20 +320,13 @@ class Poller:
         self.leds_lock.acquire()
         self.set_leds('n')
 
-        print("code string: ")
-        print(experiment['code_string'])
-
-        print("cleaning sandbox")
         self.clean_sandbox()
-        print("sandbox clean")
 
-        self.check_sagan_usage(experiment)
+        self.using_sagan = check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
 
         # instantiate the socket
-        print("creating socket")
         self.socket = Socket(url=self.socket_url, stdin=self.experiment_process.stdin)
-        print("socket reated")
 
         # create experiment log file
         self.out_log = open('experiment_log.txt', 'wb')
@@ -389,34 +350,23 @@ class Poller:
         )
         self.out_thread.start()
 
-        print('Experiment setup complete.')
-
     def end_experiment(self):
-        print("END EXPERIMENT FUNCTION CALLED")
-        print("self.using_sagan is " + str(self.using_sagan))
         self.out_thread.join()
 
         if not self.using_sagan:
             # ensure fifo is not hanging
-            print("(end_experiment) opening fifo incase of sagan not used")
             fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
             fifo_file.close()
-            print("(end_experiment) finished fifo quick open/close")
 
         self.fifo_thread.join()
-        print("(end_experiment) fifo thread joined")
         self.post_results()
-        print("(end_experiment) posted results")
         self.experiment_process = None
         self.clean_sandbox()
-        print("(end_experiment) cleaned sandbox")
         self.set_leds('g')
         self.leds_lock.release()
-        print("(end_experiment) closing socket")
         self.process_is_running = False
         self.socket.close()
-        print("(end_experiment) socket closed")
-        print('(end_experiment) Job finished.')
+        print('Job finished.')
 
     def run_experiment(self):
         try:
