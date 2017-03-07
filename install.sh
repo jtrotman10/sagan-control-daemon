@@ -33,7 +33,7 @@ fi
 sudo chown ${user}:${user} telemetry
 
 # Set up start up script
-sudo cp rc_local.txt /etc/rc.local
+sudo cp rc_local.sh /etc/rc.local
 sudo chmod +x /etc/rc.local
 sudo chmod +x run.sh
 sudo chmod +x run-notifier.sh
