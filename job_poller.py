@@ -88,7 +88,6 @@ class Socket:
         self.url = kwargs.get("url")
         print("socket give url {}".format(str(self.url)))
         self.running = True
-        websocket.enableTrace(True)
         self.socket = websocket.WebSocketApp(
             self.url,
             on_message=self.on_message,
