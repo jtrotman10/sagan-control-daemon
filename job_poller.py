@@ -103,7 +103,7 @@ class Socket:
         )
         self.socket.run_forever()
 
-    def on_open(self):
+    def on_open(self, ws):
         print("### websocket open event ###")
 
     def on_message(self, evt):
@@ -115,7 +115,7 @@ class Socket:
     def close(self):
         self.running = False
 
-    def on_close(self):
+    def on_close(self, ws):
         print("### websocket close event ###")
         if self.running:
             print("### websocket reconnecting ###")
