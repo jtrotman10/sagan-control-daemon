@@ -163,6 +163,7 @@ class Socket:
     def emit(self, channel, message):
         print('emit {} {}'.format(channel, message))
         payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
+        print(payload)
         try:
             self.socket.send(payload)
         except (BrokenPipeError, WebSocketConnectionClosedException):
