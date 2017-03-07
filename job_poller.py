@@ -124,7 +124,7 @@ class Socket:
         toRemove = []
         for i in range(len(self.buffer)):
             message = self.buffer[i]
-            if self.emit(message.channel, message.message):
+            if self.emit(message["channel"], message["message"]):
                 self.buffer.append(i)
         for index in toRemove:
             self.buffer.remove(index)
