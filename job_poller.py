@@ -157,7 +157,7 @@ class Socket:
         print("### forcing close old socket ###")
         self.socket.close()
         print("### joining old thread run forever ###")
-        self.wst.join()
+        self.socket.keep_running = True
         print("### creating new run thread ###")
         self.wst = Thread(target=self.socket.run_forever)
         self.wst.daemon = True
@@ -165,9 +165,8 @@ class Socket:
 
     def on_close(self, ws):
         print("### websocket close event ###")
-        if self.running:
-            print("### websocket reconnecting ###")
-            self.dispatch_run_thread()
+        if not self.running:
+            self.socket.keep_running = True
 
 
 class Poller:
