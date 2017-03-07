@@ -348,7 +348,7 @@ class Poller:
                             "1": result.strip()
                         }
                     }
-                    socket.send(json.dumps(payload))
+                    socket.socket.send(json.dumps(payload))
                 except (BrokenPipeError, WebSocketConnectionClosedException):
                     continue
             else:
