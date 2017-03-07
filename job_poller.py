@@ -146,8 +146,9 @@ class Socket:
         try:
             self.socket.send(payload)
         except (BrokenPipeError, WebSocketConnectionClosedException):
-            if not self.addToBuffer(channel, message):
-                print("buffer full")
+            if not catchup:
+                if not self.addToBuffer(channel, message):
+                    print("buffer full")
             return False
         return True
 
