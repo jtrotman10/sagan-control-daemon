@@ -375,6 +375,9 @@ class SaganController(StateMachine):
                 self.config['device_id'] = ''
                 self.config['device_name'] = ''
                 self.trigger('network_failure')
+            elif error.returncode == 143:
+                # term'd
+                pass
             else:
                 self.trigger('halt')
             self.save_config()
