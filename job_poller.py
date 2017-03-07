@@ -99,11 +99,13 @@ class Socket:
         self.wst = Thread(target=self.socket.run_forever)
         self.wst.daemon = True
         self.wst.start()
+        self.buffer = []
+        self.buffer_max_size = 200
 
     def on_open(self, ws):
         print("### websocket open event ###")
 
-    def on_message(self, evt):
+    def on_message(self):
         print("### websocket message event ###")
 
     def on_error(self, error):
@@ -112,9 +114,35 @@ class Socket:
     def close(self):
         self.running = False
 
+    def catchup(self):
+        toRemove = []
+        for i in range(len(self.buffer)):
+            message = self.buffer[i]
+            if self.emit(message.channel, message.message):
+                self.buffer.append(i)
+        for index in toRemove:
+            self.buffer.remove(index)
+
+    def addToBuffer(self, channel, message):
+        if len(self.buffer) < self.buffer_max_size:
+            self.buffer.append({
+                "channel": channel,
+                "message": message
+            })
+        else:
+            return False
+        return True
+
     def emit(self, channel, message):
+        self.catchup()
         payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
-        self.socket.send(payload)
+        try:
+            self.socket.send(payload)
+        except (BrokenPipeError, WebSocketConnectionClosedException):
+            if not self.addToBuffer(channel, message):
+                print("buffer full")
+            return False
+        return True
 
     def dispatch_run_thread(self):
         print("### forcing close old socket ###")
@@ -341,16 +369,7 @@ class Poller:
                 pass
 
             if result != "":
-                try:
-                    payload = {
-                        "a": {
-                            "0": "telem",
-                            "1": result.strip()
-                        }
-                    }
-                    socket.socket.send(json.dumps(payload))
-                except (BrokenPipeError, WebSocketConnectionClosedException):
-                    continue
+                socket.emit('telem', result.strip())
             else:
                 print("(EOF) CLOSING TELEMETRY THREAD")
                 FIFO.close()
