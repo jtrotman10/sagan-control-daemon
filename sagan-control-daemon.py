@@ -63,14 +63,17 @@ class StateMachine:
 
     def run(self):
         while True:
-            print('state {}'.format(self._state))
-            self.dispatch_state(self._state)
-            if self._next_state is not None:
-                self._state = self._next_state
-                self._next_state = None
+            try:
+                print('state {}'.format(self._state))
+                self.dispatch_state(self._state)
+                if self._next_state is not None:
+                    self._state = self._next_state
+                    self._next_state = None
 
-            if self._state is 'halted':
-                return
+                if self._state is 'halted':
+                    return
+            except KeyboardInterrupt:
+                self.trigger('halt')
 
 
 ap_list_re = compile(r'SSID: ([^\n]*)')
@@ -80,9 +83,9 @@ def ap_scan(interface):
     retry_count = 0
     while retry_count < 3:
         try:
-            output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'])
+            output = check_output(['/sbin/iw', interface, 'scan', 'ap-force'], timeout=20)
             break
-        except CalledProcessError:
+        except (CalledProcessError, TimeoutExpired):
             retry_count += 1
     else:
         return []
@@ -187,7 +190,7 @@ class SaganController(StateMachine):
                 self.config.update(json.load(f))
 
     def check_config(self):
-        required_fields = ['pairing_code', 'device_id']
+        required_fields = ['device_id']
         return all(self.config.get(field, None) for field in required_fields)
 
     def set_leds(self, cmd):
@@ -228,7 +231,7 @@ class SaganController(StateMachine):
         pass
 
     def starting_ap_ap_started(self):
-        self.set_leds('y')
+        pass
 
     def starting_ap_halt(self):
         check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
@@ -258,6 +261,7 @@ class SaganController(StateMachine):
         if self.config['device_id']:
             process_args += ['paired', '1']
         self.server = Popen(process_args, stdout=PIPE)
+        self.set_leds('y')
         lines = [decode(self.server.stdout.readline()) for _ in range(5)]
         if lines[4] != '\n':
             self.trigger('halt')
@@ -270,6 +274,7 @@ class SaganController(StateMachine):
         self.server.terminate()
         try:
             self.server.wait(10)
+            self.set_leds('~')
             check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
             self.trigger('received_new_config')
         except (TimeoutExpired, CalledProcessError):
@@ -343,7 +348,6 @@ class SaganController(StateMachine):
         self.save_config()
 
     def polling_for_work(self):
-        self.set_leds('g')
         try:
             check_call([
                 '/usr/bin/sudo',

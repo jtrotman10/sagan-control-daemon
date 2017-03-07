@@ -27,10 +27,10 @@ if [ ! -e leds ]; then
 fi
 sudo chown ${user}:${user} leds
 
-if [ ! -e /tmp/sagan_telemetry ]; then
-    sudo mkfifo /tmp/sagan_telemetry
-    sudo chmod 777 /tmp/sagan_telemetry
+if [ ! -e telemetry ]; then
+    sudo mkfifo telemetry
 fi
+sudo chown ${user}:${user} telemetry
 
 # Set up start up script
 sudo cp rc_local.txt /etc/rc.local

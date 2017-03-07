@@ -8,4 +8,3 @@ sudo service dnsmasq stop
 sudo service hostapd stop
 sudo service dhcpcd start
 sudo ifup ${interface}
-wpa_cli -i ${interface} scan
