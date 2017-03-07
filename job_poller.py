@@ -153,20 +153,10 @@ class Socket:
             return False
         return True
 
-    def dispatch_run_thread(self):
-        print("### forcing close old socket ###")
-        self.socket.close()
-        print("### joining old thread run forever ###")
-        self.socket.keep_running = True
-        print("### creating new run thread ###")
-        self.wst = Thread(target=self.socket.run_forever)
-        self.wst.daemon = True
-        self.wst.start()
-
     def on_close(self, ws):
         print("### websocket close event ###")
-        if not self.running:
-            self.socket.keep_running = True
+        if self.running:
+           self.socket.run_forever()
 
 
 class Poller:
