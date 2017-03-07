@@ -93,7 +93,7 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
 class Socket:
     def __init__(self, **kwargs):
         self.url = kwargs.get("url")
-
+        self.running = True
         self.socket = websocket.WebSocketApp(
             self.url,
             on_message=self.on_message,
@@ -112,8 +112,21 @@ class Socket:
     def on_error(self, error):
         print("### websocket error event ###")
 
+    def close(self):
+        self.running = False
+
     def on_close(self):
         print("### websocket close event ###")
+        if self.running:
+            print("### websocket reconnecting ###")
+            self.socket = websocket.WebSocketApp(
+                self.url,
+                on_message=self.on_message,
+                on_error=self.on_error,
+                on_close=self.on_close,
+                on_open=self.on_open
+            )
+            self.socket.run_forever()
 
 
 class Poller:
@@ -400,6 +413,7 @@ class Poller:
         self.leds_lock.release()
         print("(end_experiment) closing socket")
         self.process_is_running = False
+        self.socket.close()
         print("(end_experiment) socket closed")
         print('(end_experiment) Job finished.')
 
