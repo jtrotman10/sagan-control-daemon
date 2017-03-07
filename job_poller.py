@@ -106,9 +106,11 @@ def handle_telemetry_pipe(socket, _FIFO_PATH):
             break
 
 
+sagan_import_pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
+
+
 def check_sagan_usage(experiment):
-    pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
-    match = pattern.search(experiment['code_string'])
+    match = sagan_import_pattern.search(experiment['code_string'])
     return match is not None
 
 
@@ -137,7 +139,7 @@ class Socket:
         payload = json.loads(message)['a']
         payload = [payload["0"], payload["1"]]
         if str(payload[0]) == "stdin":
-            self.stdin.write(payload[1])
+            self.stdin.write(payload[1].encode())
         else:
             pass
 
