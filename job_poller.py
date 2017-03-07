@@ -297,10 +297,7 @@ class Poller:
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
-        print("using_sagan has been set to " + str(self.using_sagan))
-
     def start_experiment_proc(self, experiment):
-
         with open('experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
