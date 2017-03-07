@@ -363,6 +363,8 @@ class Poller:
         # instantiate the socket
         self.socket = Socket(url=self.socket_url)
 
+        print("code string: ")
+        print(experiment['code_string'])
         self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
 
