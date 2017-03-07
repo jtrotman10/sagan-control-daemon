@@ -114,7 +114,7 @@ class Socket:
         # else:
         #     pass
 
-    def on_error(self, error):
+    def on_error(self, _, error):
         print("### websocket error event ###")
 
     def close(self):
@@ -135,6 +135,7 @@ class Socket:
                 "channel": channel,
                 "message": message
             })
+            print("Adding packet to buffer, buffer size <"+str(len(self.buffer))+">")
         else:
             return False
         return True
