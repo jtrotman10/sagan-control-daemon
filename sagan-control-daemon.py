@@ -73,6 +73,7 @@ class StateMachine:
                 if self._state is 'halted':
                     return
             except KeyboardInterrupt:
+                print('TERM received.')
                 self.trigger('halt')
 
 
