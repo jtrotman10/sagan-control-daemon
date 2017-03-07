@@ -26,15 +26,6 @@ def emit(ws, channel, message):
     payload = str("{\"a\":{\"0\":\"" + channel + "\",\"1\":\"" + str(message.encode("utf8"))[2:-1] + "\"}}")
     ws.send(payload)
 
-
-def on_error(ws, error):
-    print("### web socket error  ### {}".format(error))
-
-
-def on_open(ws):
-    print("### web socket opened ###")
-
-
 # --------------- end web socket event handlers -------------------------
 
 
@@ -99,27 +90,58 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
         sleep(heart_beat_time)
 
 
+class Socket:
+    def __init__(self, **kwargs):
+        self.url = kwargs.get("url")
+
+        self.socket = websocket.WebSocketApp(
+            self.url,
+            on_message=self.on_message,
+            on_error=self.on_error,
+            on_close=self.on_close,
+            on_open=self.on_open
+        )
+        self.socket.run_forever()
+
+    def on_open(self):
+        print("### websocket open event ###")
+
+    def on_message(self, evt):
+        print("### websocket message event ###")
+
+    def on_error(self, error):
+        print("### websocket error event ###")
+
+    def on_close(self):
+        print("### websocket close event ###")
+
+
 class Poller:
     def __init__(self, device_id, host, leds=None):
         self.device_id = device_id
         self.host = host
+
         self.out_thread = None
         self.run_job = None
         self.using_sagan = False
-        self.socket_thread = None
+
         self.out_log = None
         self.experiment_process = None  # type: Popen
-        self.ip = None
-        self.port = None
+
         self.socket = None
+
         self.FIFO = None
         self.fifo_thread = None
+
         self.results_stream = None
         self.error_stream = None
+
         self.socket_url = None
         self.telemetry_pipe = None
+
         self.stdout_text = b''
         self.stderr_text = b''
+
         self.socket_close_socket = None  # type: Event
         self.state = 'polling'
         self.process_is_running = True
@@ -132,15 +154,6 @@ class Poller:
         self.leds_lock = RLock()
         if not leds:
             self.leds_file = open('/dev/null', 'w')
-
-    def on_close(self, ws):
-        print("### web socket closed ###")
-        if self.process_is_running:
-            print("[websocket on_close] process is running, attempting to reconnect")
-            # todo - reconnect
-
-        else:
-            print("[websocket on_close] websocket closed")
 
     def set_leds(self, cmd):
         with self.leds_lock:
@@ -238,7 +251,6 @@ class Poller:
         files = os.listdir(path='.')
         print("CLEANING SANDBOX SETTING self.using_sagan to false")
         self.using_sagan = False
-        self.socket_close_socket = None
         print("self.using_sagan is now "+str(self.using_sagan))
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
@@ -328,32 +340,6 @@ class Poller:
                 print("FIFO CLOSED")
                 break
 
-    def run_socket_forever(self):
-        while not self.socket_close_socket.is_set():
-            self.socket.keep_running = True
-            self.socket.run_forever()
-            print("[run_socket_forever] restarting socket runner")
-
-    def disconnect_socket(self):
-        self.socket_close_socket.set()
-        self.socket.close()
-        self.socket_thread.join()
-
-    def connect_socket(self):
-        # connect to the websocket
-        print("[connect socket] creating socket thread")
-        self.socket = websocket.WebSocketApp(
-            self.socket_url,
-            on_message=self.on_message,
-            on_error=on_error,
-            on_close=self.on_close,
-            on_open=on_open
-        )
-        self.socket.keep_running = True
-        self.socket_thread = Thread(target=self.run_socket_forever)  # todo
-        self.socket_thread.start()
-        print("[connect socket] socket thread running")
-
     def start_experiment(self, experiment):
         print('Starting experiment "{}".'.format(experiment['title']))
         self.leds_lock.acquire()
@@ -361,12 +347,8 @@ class Poller:
 
         self.clean_sandbox()
 
-        # connect the socket
-        self.ip = (self.socket_url.split(":")[1])[2:]
-        self.port = self.socket_url.split(":")[1]
-
-        self.socket_close_socket = Event()
-        self.connect_socket()
+        # instantiate the socket
+        self.socket = Socket(url=self.socket_url)
 
         self.check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
@@ -418,7 +400,6 @@ class Poller:
         self.leds_lock.release()
         print("(end_experiment) closing socket")
         self.process_is_running = False
-        self.disconnect_socket()
         print("(end_experiment) socket closed")
         print('(end_experiment) Job finished.')
 
