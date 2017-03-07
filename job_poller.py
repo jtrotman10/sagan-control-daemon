@@ -31,7 +31,6 @@ def process_read(out_stream, socket, log_stream):
         if data == b'':
             break
         try:
-            print("socket emit (stdout) <{}>".format(data.decode("utf8")))
             socket.emit("stdout", data.decode("utf8"))
             log_stream.write(data)
         except (BrokenPipeError, WebSocketConnectionClosedException):
@@ -121,13 +120,15 @@ class Socket:
         self.running = False
 
     def catchup(self):
-        toRemove = []
+        toremove = []
         for i in range(len(self.buffer)):
             message = self.buffer[i]
             if self.emit(message["channel"], message["message"], catchup=False):
-                self.buffer.append(i)
-        for index in toRemove:
+                print("Catchup successful for buffered message number {}".format(str(i)))
+                self.toremove.append(i)
+        for index in toremove:
             self.buffer.remove(index)
+
 
     def addToBuffer(self, channel, message):
         if len(self.buffer) < self.buffer_max_size:
