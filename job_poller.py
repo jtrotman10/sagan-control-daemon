@@ -105,7 +105,7 @@ class Socket:
     def on_open(self, ws):
         print("### websocket open event ###")
 
-    def on_message(self, message):
+    def on_message(self, _, message):
         print("### websocket message event ###")
         # payload = json.loads(message)['a']
         # payload = [payload["0"], payload["1"]]
