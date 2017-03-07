@@ -100,7 +100,6 @@ class Socket:
         self.wst = Thread(target=self.socket.run_forever)
         self.wst.daemon = True
         self.wst.start()
-        self.socket.run_forever()
 
     def on_open(self, ws):
         print("### websocket open event ###")
