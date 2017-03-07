@@ -1,5 +1,5 @@
+from signal import signal, SIGINT, SIGTERM
 from codecs import decode
-from random import choice
 import json
 
 import sys
@@ -61,7 +61,13 @@ class StateMachine:
         assert self._next_state is None
         self._next_state = self.transitions[self._state][event]
 
+    def _term(self):
+        print('TERM received.')
+        self.trigger('halt')
+
     def run(self):
+        signal(SIGINT, self._term)
+        signal(SIGTERM, self._term)
         while True:
             try:
                 print('state {}'.format(self._state))
@@ -73,8 +79,7 @@ class StateMachine:
                 if self._state is 'halted':
                     return
             except KeyboardInterrupt:
-                print('TERM received.')
-                self.trigger('halt')
+                self._term()
 
 
 ap_list_re = compile(r'SSID: ([^\n]*)')
