@@ -105,8 +105,14 @@ class Socket:
     def on_open(self, ws):
         print("### websocket open event ###")
 
-    def on_message(self):
+    def on_message(self, message):
         print("### websocket message event ###")
+        # payload = json.loads(message)['a']
+        # payload = [payload["0"], payload["1"]]
+        # if str(payload[0]) == "stdin":
+        #     self.handle_stdin(payload[1])
+        # else:
+        #     pass
 
     def on_error(self, error):
         print("### websocket error event ###")
@@ -336,14 +342,6 @@ class Poller:
         self.experiment_process.stdin.write(message.encode())
         self.experiment_process.stdin.flush()
         self.out_log.write(message)
-
-    def on_message(self, _, message):
-        payload = json.loads(message)['a']
-        payload = [payload["0"], payload["1"]]
-        if str(payload[0]) == "stdin":
-            self.handle_stdin(payload[1])
-        else:
-            pass
 
     def handle_telemetry_pipe(self, socket, _FIFO_PATH):
         FIFO = None
