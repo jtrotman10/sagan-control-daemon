@@ -279,7 +279,11 @@ class SaganController(StateMachine):
         print('New config {}'.format(self.config))
         self.server.terminate()
         try:
-            self.server.wait(10)
+            self.server.wait(2)
+        except (TimeoutExpired, CalledProcessError):
+            self.server.kill()
+
+        try:
             self.set_leds('~')
             check_call(['/bin/bash', 'stop-ap.sh', self.config['interface']])
             self.trigger('received_new_config')
