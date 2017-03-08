@@ -32,11 +32,15 @@ function onData(context) {
         $.ajax({
             url: '/',
             data: $('#config-form').serialize(),
-            complete: function () {
+            success: function (data, status, jqxhr) {
                 $("#content-submit").css('display', 'none');
                 $("#content-pending").css('display', 'block');
             },
-            dataType: 'application/x-www-form-urlencoded',
+            error: function (jqxhr, status, error) {
+                $("#modal-message")
+                    .text('Could not react your Sagan. Are you still connected to the "Sagan", Wifi network?');
+                $("#message-modal").modal('show');
+            },
             method: 'post'
         });
         event.preventDefault();

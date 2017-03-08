@@ -28,6 +28,10 @@ label {
     color: black;
 }
 
+.modal-body {
+    color: black;
+}
+
 a {
     color: white;
     text-decoration: underline;
