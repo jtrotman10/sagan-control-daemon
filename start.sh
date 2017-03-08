@@ -13,10 +13,14 @@ touch enabled
 
 if [ ! -e run-notifier.pid ]; then
     ./run-notifier.sh &
-    echo $! > run-notifier.pid
+    run_notifier_pid=$!
+    disown ${run_notifier_pid}
+    echo ${run_notifier_pid} > run-notifier.pid
 fi
 
 if [ ! -e run.pid ]; then
     ./run.sh &
-    echo $! > run.pid
+    run_pid=$!
+    disown ${run_pid}
+    echo ${run_pid} > run.pid
 fi
