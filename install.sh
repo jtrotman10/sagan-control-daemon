@@ -2,6 +2,8 @@
 
 set -e
 sudo apt-get -y install hostapd dnsmasq zip
+sudo systemctl disable hostapd
+sudo systemctl disable dnsmasq
 
 # Set up virtual environment
 sudo pip3 install virtualenv
