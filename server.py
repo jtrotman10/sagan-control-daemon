@@ -45,8 +45,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         if path == '/config':
             self.render_config()
-
-        if path == '/logs':
+        elif path == '/logs':
             self.render_logs()
         else:
             super(Handler, self).do_GET()
