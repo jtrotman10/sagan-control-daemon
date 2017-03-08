@@ -47,6 +47,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.render_config()
         elif path == '/logs':
             self.render_logs()
+        elif path == '/errors':
+            self.render_errors()
         else:
             super(Handler, self).do_GET()
 
@@ -59,7 +61,15 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(content)
 
     def render_logs(self):
-        content = open('/opt/sagan-control-daemon/log.txt').read()
+        content = open('/opt/sagan-control-daemon/log.txt', 'rb').read()
+        self.send_response(200)
+        self.send_header("Content-type", "text")
+        self.send_header("Content-Length", len(content))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def render_errors(self):
+        content = open('/opt/sagan-control-daemon/errors.txt', 'rb').read()
         self.send_response(200)
         self.send_header("Content-type", "text")
         self.send_header("Content-Length", len(content))
@@ -82,6 +92,9 @@ class Handler(SimpleHTTPRequestHandler):
         print(_context['name'])
         print('')
         sys.stdout.flush()
+
+    def log_message(self, format, *args):
+        pass
 
 
 def main():
