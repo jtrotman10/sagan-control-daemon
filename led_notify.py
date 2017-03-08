@@ -5,6 +5,7 @@ import RPi.GPIO as GPIO
 from math import cos, pi
 from threading import Thread
 from queue import Queue, Empty
+from signal import signal, SIGTERM, SIGINT
 
 import sys
 
@@ -119,12 +120,17 @@ class Notifier:
         self.read_commands()
         update_thread.join()
 
+    def stop(self):
+        self.queue.put('x')
+
 
 def main():
     file = None
     if len(sys.argv) > 1:
         file = open(sys.argv[1])
     notifier = Notifier(file)
+    signal(SIGINT, notifier.stop)
+    signal(SIGTERM, notifier.stop)
     notifier.run()
 
 
