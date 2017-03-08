@@ -51,6 +51,6 @@ window.onload = function () {
 function selectNetwork() {
     var network = $(this).data('network');
     $('#ssid-input').val(network);
-    $('#networksModal').modal('hide');
+    $('#networks-modal').modal('hide');
 
 }
