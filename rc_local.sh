@@ -1,5 +1,5 @@
 #!/bin/bash
-printf "Enabling remote experiments"
+echo "Enabling remote experiments"
 rm /opt/sagan-control-daemon/*.pid
 rm /opt/sagan-control-daemon/log.txt
 
