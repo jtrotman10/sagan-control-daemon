@@ -14,10 +14,13 @@ if [ -e run.pid ]; then
 fi;
 
 if [ -e run-notifier.pid ]; then
+    echo "x" > leds
     kill $(cat run-notifier.pid)
     rm run-notifier.pid
 fi
 
 killall python
 
-rm enabled
+if [ -e enabled ]; then
+    rm enabled
+fi
