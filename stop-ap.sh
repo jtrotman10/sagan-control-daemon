@@ -15,5 +15,5 @@ while [ ${i} -le 10 ]; do
     if sudo ifup ${interface}; then
         exit 0;
     fi
-    i=$((${i} + 1))
+    i=$((i + 1))
 done
