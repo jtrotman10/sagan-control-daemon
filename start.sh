@@ -12,11 +12,11 @@ cd /opt/sagan-control-daemon
 touch enabled
 
 if [ ! -e run-notifier.pid ]; then
-    run-notifier.sh &
+    ./run-notifier.sh &
     echo $! > run-notifier.pid
 fi
 
 if [ ! -e run.pid ]; then
-    run.sh &
+    ./run.sh &
     echo $! > run.pid
 fi
