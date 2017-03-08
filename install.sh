@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-sudo apt-get -y install hostapd dnsmasq zip
+sudo apt-get -y install hostapd dnsmasq zip &> /dev/null
 sudo systemctl disable hostapd &> /dev/null
 sudo systemctl disable dnsmasq &> /dev/null
 
