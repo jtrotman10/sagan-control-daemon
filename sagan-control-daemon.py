@@ -365,7 +365,10 @@ class SaganController(StateMachine):
                 self.config['host'],
                 os.path.join(os.curdir, 'sandbox'),
                 os.path.join(os.curdir, 'leds')
-            ])
+            ],
+                stdout=sys.stdout,
+                stderr=sys.stderr
+            )
         except CalledProcessError as error:
             if error.returncode == 1:
                 self.config['error'] = 'Could not connect to the internet over the Wifi network selected.'
