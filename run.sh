@@ -3,7 +3,7 @@ cd /opt/sagan-control-daemon/
 
 while true; do
     echo "~" > leds
-    env/bin/python sagan-control-daemon.py config.json
+    env/bin/python sagan-control-daemon.py config.json &> log.txt
     echo "~" > leds
     sleep 10s
 done
