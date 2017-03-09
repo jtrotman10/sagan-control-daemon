@@ -364,6 +364,7 @@ class SaganController(StateMachine):
                 '-u',
                 self.config['user'],
                 sys.executable,
+                '-u',
                 'job_poller.py',
                 str(self.config['device_id']),
                 self.config['host'],
