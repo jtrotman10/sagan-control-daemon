@@ -14,7 +14,7 @@ fi
 . env/bin/activate
 pip install -r requirements.txt
 
-user="pi"
+user="remote-experiments"
 if ! id ${user} >/dev/null 2>&1; then
     useradd -r ${user}
 fi
