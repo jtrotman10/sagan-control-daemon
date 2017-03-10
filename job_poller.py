@@ -1,6 +1,8 @@
 #!/env/bin/python3
 
 from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
+
+import select
 from websocket import WebSocketConnectionClosedException
 from requests.exceptions import ConnectionError
 from threading import Thread, Event, RLock
@@ -81,37 +83,38 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
             retry_count = 0
         sleep(heart_beat_time)
 
+READ_LEN = 512
+DELIMITER = b'\n'
 
-def handle_telemetry_pipe(socket, _FIFO_PATH):
-    FIFO = None
+
+def handle_telemetry_pipe(socket, _FIFO_PATH, process: Popen):
+    pipe = None
     try:
-        FIFO = open(_FIFO_PATH, 'r')
+        pipe = os.open(_FIFO_PATH, os.O_NONBLOCK | os.O_RDONLY)
     except FileNotFoundError:
         socket.emit('error', "sagan telemetry configuration error")
 
-    while True:
-        try:
-            result = FIFO.readline()
-        except OSError:
-            FIFO.close()
-            break
-        except ValueError:
-            FIFO.close()
-            pass
-
-        if result != "":
-            socket.emit('telem', result.strip())
-        else:
-            FIFO.close()
-            break
-
-
-sagan_import_pattern = re.compile("(from\s+sagan\s+import\s*\\*)|(import\s+sagan(\s+as([a-zA-Z_$][a-zA-Z_$0-9]*))?)")
-
-
-def check_sagan_usage(experiment):
-    match = sagan_import_pattern.search(experiment['code_string'])
-    return match is not None
+    buf = b''
+    while process.poll() is None:
+        r, w, x = select.select([pipe], [], [], 1)
+        if pipe in r:
+            try:
+                new_data = os.read(pipe, READ_LEN)
+            except OSError as os_error:
+                if os_error.errno == 35:
+                    # errno 32 is "File temporarily unavailable"
+                    continue
+                else:
+                    print('error reading pipe')
+                    print(os_error, file=sys.stderr)
+                    break
+            delim_pos = new_data.find(DELIMITER)
+            if delim_pos:
+                buf += new_data[:delim_pos + 1]
+                socket.emit('telem', buf.strip().decode())
+                buf = new_data[delim_pos + 1:]
+            else:
+                buf += new_data
 
 
 class Socket:
@@ -145,6 +148,10 @@ class Socket:
 
     def close(self):
         self._stop.set()
+        try:
+            self.socket.close()
+        except WebSocketConnectionClosedException:
+            pass
 
     def emit(self, channel, message):
         payload = json.dumps({
@@ -167,7 +174,6 @@ class Poller:
 
         self.out_thread = None
         self.run_job = None
-        self.using_sagan = False
 
         self.out_log = None
         self.experiment_process = None  # type: Popen
@@ -188,7 +194,6 @@ class Poller:
 
         self.socket_close_socket = None  # type: Event
         self.state = 'polling'
-        self.process_is_running = True
         self.state_machine = {
             'polling': self.check_for_jobs,
             'running': self.run_experiment,
@@ -295,7 +300,6 @@ class Poller:
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
-        self.using_sagan = False
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
@@ -306,7 +310,6 @@ class Poller:
         env = os.environ.copy()
         env['PATH'] += ':/home/pi/Documents/cuberider/'
         env['TELEMETRY'] = _TELEMETRY_PIPE_PATH
-        self.process_is_running = True
         self.experiment_process = Popen(
             [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
@@ -323,7 +326,6 @@ class Poller:
 
         self.clean_sandbox()
 
-        self.using_sagan = check_sagan_usage(experiment)
         self.start_experiment_proc(experiment)
 
         # instantiate the socket
@@ -336,7 +338,8 @@ class Poller:
             target=handle_telemetry_pipe,
             args=(
                 self.socket,
-                _TELEMETRY_PIPE_PATH
+                _TELEMETRY_PIPE_PATH,
+                self.experiment_process
             )
         )
         self.fifo_thread.start()
@@ -353,20 +356,13 @@ class Poller:
 
     def end_experiment(self):
         self.out_thread.join()
-
-        if not self.using_sagan:
-            # ensure fifo is not hanging
-            fifo_file = open(_TELEMETRY_PIPE_PATH, 'w')
-            fifo_file.close()
-
         self.fifo_thread.join()
         self.post_results()
         self.experiment_process = None
         self.clean_sandbox()
+        self.socket.close()
         self.set_leds('g')
         self.leds_lock.release()
-        self.process_is_running = False
-        self.socket.close()
         print('Job finished.')
 
     def run_experiment(self):
