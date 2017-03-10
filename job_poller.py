@@ -174,7 +174,6 @@ class Poller:
 
         self.out_thread = None
         self.run_job = None
-        self.using_sagan = False
 
         self.out_log = None
         self.experiment_process = None  # type: Popen
@@ -301,7 +300,6 @@ class Poller:
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
-        self.using_sagan = False
         if files:
             check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
 
