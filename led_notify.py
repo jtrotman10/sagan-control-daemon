@@ -41,6 +41,7 @@ class Notifier:
             'x'
         }
         self.cmd_file = cmd_file or sys.stdin
+        self._term_triggered = Event()
 
     def init(self):
         led1_pin = 27
@@ -64,8 +65,6 @@ class Notifier:
         self.r.start(100)
         self.g.start(100)
         self.b.start(100)
-
-        self._term_triggered = Event()
 
     def teardown(self):
         self.r.stop()
