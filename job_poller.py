@@ -102,9 +102,12 @@ def handle_telemetry_pipe(socket, _FIFO_PATH, process: Popen):
                 new_data = os.read(pipe, READ_LEN)
             except OSError as os_error:
                 if os_error.errno == 35:
+                    # errno 32 is "File temporarily unavailable"
                     continue
-                print('error reading pipe')
-                print(os_error, file=sys.stderr)
+                else:
+                    print('error reading pipe')
+                    print(os_error, file=sys.stderr)
+                    break
             delim_pos = new_data.find(DELIMITER)
             if delim_pos:
                 buf += new_data[:delim_pos + 1]
