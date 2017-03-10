@@ -9,6 +9,8 @@ from signal import signal, SIGTERM, SIGINT
 
 import sys
 
+from threading import Event
+
 
 class Notifier:
     def __init__(self, cmd_file=None):
@@ -63,6 +65,8 @@ class Notifier:
         self.g.start(100)
         self.b.start(100)
 
+        self._term_triggered = Event()
+
     def teardown(self):
         self.r.stop()
         self.g.stop()
@@ -71,7 +75,7 @@ class Notifier:
 
     def read_commands(self):
         try:
-            while True:
+            while not self._term_triggered.is_set():
                 cmd = self.cmd_file.readline().strip()
                 if cmd not in self.cmds:
                     continue
@@ -79,7 +83,9 @@ class Notifier:
                 if cmd == 'x':
                     break
         except KeyboardInterrupt:
-            self.queue.put('x')
+            pass
+
+        self.queue.put('x')
 
     def update_leds(self):
         period = 100
@@ -121,7 +127,7 @@ class Notifier:
         update_thread.join()
 
     def stop(self):
-        self.queue.put('x')
+        self._term_triggered.set()
 
 
 def main():
