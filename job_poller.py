@@ -111,7 +111,7 @@ def handle_telemetry_pipe(socket, _FIFO_PATH, process: Popen):
             delim_pos = new_data.find(DELIMITER)
             if delim_pos:
                 buf += new_data[:delim_pos + 1]
-                socket.emit('telem', buf.strip())
+                socket.emit('telem', buf.strip().decode())
                 buf = new_data[delim_pos + 1:]
             else:
                 buf += new_data
