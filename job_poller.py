@@ -83,7 +83,8 @@ def heart_beat_loop(url, heart_beat_time, stop_trigger: Event, leds, leds_lock):
             retry_count = 0
         sleep(heart_beat_time)
 
-READ_LEN = 512DELIMITER = b'\n'
+READ_LEN = 512
+DELIMITER = b'\n'
 
 
 def handle_telemetry_pipe(socket, _FIFO_PATH, process: Popen):
