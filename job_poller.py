@@ -360,8 +360,8 @@ class Poller:
         self.experiment_process = None
         self.clean_sandbox()
         self.socket.close()
-        self.set_leds('g')
         self.leds_lock.release()
+        self.set_leds('g')
         print('Job finished.')
 
     def run_experiment(self):
