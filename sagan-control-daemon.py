@@ -365,6 +365,18 @@ class SaganController(StateMachine):
                 self.config['user'],
                 sys.executable,
                 '-u',
+                'update_rtc.py',
+            ])
+        except CalledProcessError as error:
+            print('Could not update RTC: {}'.format(error))
+
+        try:
+            check_call([
+                '/usr/bin/sudo',
+                '-u',
+                self.config['user'],
+                sys.executable,
+                '-u',
                 'job_poller.py',
                 str(self.config['device_id']),
                 self.config['host'],
