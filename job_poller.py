@@ -272,10 +272,11 @@ class Poller:
         return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
 
     def post_results(self):
-        print('Uploading results.')
+        print('Packing results.')
         self.set_leds('~')
         self.out_log.flush()
         check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
+        print('Uploading results.')
         result = post(
             '{0}/api/files/'.format(self.host),
             files={
@@ -297,6 +298,8 @@ class Poller:
         )
         if result.status_code != 200:
             print("Failed to notify server that job finished")
+
+        print('Results uploaded.')
 
     def clean_sandbox(self):
         files = os.listdir(path='.')
