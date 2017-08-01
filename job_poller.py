@@ -308,8 +308,11 @@ class Poller:
         print('Results uploaded.')
 
     def clean_sandbox(self):
-        shutil.rmtree('results')
-        os.remove('results.zip')
+        try:
+            shutil.rmtree('results')
+            os.remove('results.zip')
+        except FileNotFoundError:
+            pass
         os.mkdir('results')
 
 
