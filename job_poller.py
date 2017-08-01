@@ -309,6 +309,7 @@ class Poller:
 
     def clean_sandbox(self):
         shutil.rmtree('results')
+        os.remove('results.zip')
         os.mkdir('results')
 
 
