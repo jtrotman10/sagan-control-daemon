@@ -193,7 +193,11 @@ class SaganController(StateMachine):
             self.save_config()
         else:
             with open(self.config_file_path, 'r') as f:
-                self.config.update(json.load(f))
+                try:
+                    self.config.update(json.load(f))
+                except ValueError:
+                    # This writes a default config file containing initial_config
+                    self.save_config()
 
     def check_config(self):
         required_fields = ['device_id']
