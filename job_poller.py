@@ -3,6 +3,8 @@
 from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
 
 import select
+
+import shutil
 from websocket import WebSocketConnectionClosedException
 from requests.exceptions import ConnectionError
 from threading import Thread, Event, RLock
@@ -302,9 +304,10 @@ class Poller:
         print('Results uploaded.')
 
     def clean_sandbox(self):
-        files = os.listdir(path='.')
-        if files:
-            check_call(['/bin/bash', '-c', 'rm -r'] + files)
+        os.chdir('..')
+        shutil.rmtree('sandbox')
+        os.mkdir('sandbox')
+
 
     def start_experiment_proc(self, experiment):
         with open('experiment.py', 'w') as f:
