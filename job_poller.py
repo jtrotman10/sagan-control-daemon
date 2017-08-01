@@ -213,6 +213,11 @@ class Poller:
 
     def go(self):
         self.set_leds('~')
+        try:
+            os.mkdir('working')
+        except FileExistsError:
+            pass
+        os.chdir('working')
         print('Device id: {}'.format(self.device_id))
         print('Awaiting work.')
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
@@ -305,8 +310,8 @@ class Poller:
 
     def clean_sandbox(self):
         os.chdir('..')
-        shutil.rmtree('sandbox')
-        os.mkdir('sandbox')
+        shutil.rmtree('working')
+        os.mkdir('working')
 
 
     def start_experiment_proc(self, experiment):
