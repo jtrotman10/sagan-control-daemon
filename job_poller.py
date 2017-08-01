@@ -217,7 +217,6 @@ class Poller:
             os.mkdir('working')
         except FileExistsError:
             pass
-        os.chdir('working')
         print('Device id: {}'.format(self.device_id))
         print('Awaiting work.')
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
@@ -309,7 +308,6 @@ class Poller:
         print('Results uploaded.')
 
     def clean_sandbox(self):
-        os.chdir('..')
         shutil.rmtree('working')
         os.mkdir('working')
 
@@ -327,7 +325,8 @@ class Poller:
             stdout=PIPE,
             stderr=STDOUT,
             bufsize=0,
-            env=env
+            env=env,
+            cwd='working'
         )
 
     def start_experiment(self, experiment):
