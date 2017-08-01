@@ -304,7 +304,7 @@ class Poller:
     def clean_sandbox(self):
         files = os.listdir(path='.')
         if files:
-            check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
+            check_call(['/bin/bash', '-c', 'rm -r'] + files)
 
     def start_experiment_proc(self, experiment):
         with open('experiment.py', 'w') as f:
