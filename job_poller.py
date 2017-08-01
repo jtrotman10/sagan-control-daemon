@@ -320,7 +320,7 @@ class Poller:
         env['PATH'] += ':/home/pi/Documents/cuberider/'
         env['TELEMETRY'] = _TELEMETRY_PIPE_PATH
         self.experiment_process = Popen(
-            [sys.executable, '-u', 'working/experiment.py'],
+            [sys.executable, '-u', 'experiment.py'],
             stdin=PIPE,
             stdout=PIPE,
             stderr=STDOUT,
