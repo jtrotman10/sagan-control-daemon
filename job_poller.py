@@ -214,7 +214,7 @@ class Poller:
     def go(self):
         self.set_leds('~')
         try:
-            os.mkdir('working')
+            os.mkdir('results')
         except FileExistsError:
             pass
         print('Device id: {}'.format(self.device_id))
@@ -281,7 +281,7 @@ class Poller:
         print('Packing results.')
         self.set_leds('~')
         self.out_log.flush()
-        check_call(['/usr/bin/zip', '-r', 'results.zip'] + glob('working/*'))
+        check_call(['/usr/bin/zip', '-r', 'results.zip'] + glob('results/*'))
         print('Uploading results.')
         result = post(
             '{0}/api/files/'.format(self.host),
@@ -308,12 +308,12 @@ class Poller:
         print('Results uploaded.')
 
     def clean_sandbox(self):
-        shutil.rmtree('working')
-        os.mkdir('working')
+        shutil.rmtree('results')
+        os.mkdir('results')
 
 
     def start_experiment_proc(self, experiment):
-        with open('working/experiment.py', 'w') as f:
+        with open('results/experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
         env = os.environ.copy()
@@ -326,7 +326,7 @@ class Poller:
             stderr=STDOUT,
             bufsize=0,
             env=env,
-            cwd='working'
+            cwd='results'
         )
 
     def start_experiment(self, experiment):
@@ -342,7 +342,7 @@ class Poller:
         self.socket = Socket(url=self.socket_url, stdin=self.experiment_process.stdin)
 
         # create experiment log file
-        self.out_log = open('working/experiment_log.txt', 'wb')
+        self.out_log = open('results/experiment_log.txt', 'wb')
 
         self.fifo_thread = Thread(
             target=handle_telemetry_pipe,
