@@ -281,7 +281,7 @@ class Poller:
         print('Packing results.')
         self.set_leds('~')
         self.out_log.flush()
-        check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
+        check_call(['/usr/bin/zip', '-r', 'results.zip'] + glob('working/*'))
         print('Uploading results.')
         result = post(
             '{0}/api/files/'.format(self.host),
@@ -313,14 +313,14 @@ class Poller:
 
 
     def start_experiment_proc(self, experiment):
-        with open('experiment.py', 'w') as f:
+        with open('working/experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
         env = os.environ.copy()
         env['PATH'] += ':/home/pi/Documents/cuberider/'
         env['TELEMETRY'] = _TELEMETRY_PIPE_PATH
         self.experiment_process = Popen(
-            [sys.executable, '-u', 'experiment.py'],
+            [sys.executable, '-u', 'working/experiment.py'],
             stdin=PIPE,
             stdout=PIPE,
             stderr=STDOUT,
@@ -342,7 +342,7 @@ class Poller:
         self.socket = Socket(url=self.socket_url, stdin=self.experiment_process.stdin)
 
         # create experiment log file
-        self.out_log = open('experiment_log.txt', 'wb')
+        self.out_log = open('working/experiment_log.txt', 'wb')
 
         self.fifo_thread = Thread(
             target=handle_telemetry_pipe,
