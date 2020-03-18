@@ -3,6 +3,8 @@
 from subprocess import Popen, PIPE, TimeoutExpired, check_call, STDOUT
 
 import select
+
+import shutil
 from websocket import WebSocketConnectionClosedException
 from requests.exceptions import ConnectionError
 from threading import Thread, Event, RLock
@@ -211,6 +213,10 @@ class Poller:
 
     def go(self):
         self.set_leds('~')
+        try:
+            os.mkdir('results')
+        except FileExistsError:
+            pass
         print('Device id: {}'.format(self.device_id))
         print('Awaiting work.')
         url = '{0}/dispatch/devices/{1}/heartbeat'.format(self.host, self.device_id)
@@ -272,10 +278,11 @@ class Poller:
         return put('{0}/dispatch/jobs/{1}/start'.format(self.host, self.run_job), {})
 
     def post_results(self):
-        print('Uploading results.')
+        print('Packing results.')
         self.set_leds('~')
         self.out_log.flush()
-        check_call(['/usr/bin/zip', 'results.zip'] + glob('*'))
+        check_call(['/usr/bin/zip', '-r', 'results.zip'] + glob('results/*'))
+        print('Uploading results.')
         result = post(
             '{0}/api/files/'.format(self.host),
             files={
@@ -298,13 +305,19 @@ class Poller:
         if result.status_code != 200:
             print("Failed to notify server that job finished")
 
+        print('Results uploaded.')
+
     def clean_sandbox(self):
-        files = os.listdir(path='.')
-        if files:
-            check_call(['/bin/bash', '-c', 'rm -r {}'.format(' '.join(files))])
+        try:
+            shutil.rmtree('results')
+            os.remove('results.zip')
+        except FileNotFoundError:
+            pass
+        os.mkdir('results')
+
 
     def start_experiment_proc(self, experiment):
-        with open('experiment.py', 'w') as f:
+        with open('results/experiment.py', 'w') as f:
             f.write(experiment['code_string'])
 
         env = os.environ.copy()
@@ -316,7 +329,8 @@ class Poller:
             stdout=PIPE,
             stderr=STDOUT,
             bufsize=0,
-            env=env
+            env=env,
+            cwd='results'
         )
 
     def start_experiment(self, experiment):
@@ -332,7 +346,7 @@ class Poller:
         self.socket = Socket(url=self.socket_url, stdin=self.experiment_process.stdin)
 
         # create experiment log file
-        self.out_log = open('experiment_log.txt', 'wb')
+        self.out_log = open('results/experiment_log.txt', 'wb')
 
         self.fifo_thread = Thread(
             target=handle_telemetry_pipe,
@@ -404,3 +418,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

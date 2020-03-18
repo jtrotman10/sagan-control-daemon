@@ -7,3 +7,5 @@ rm /opt/sagan-control-daemon/errors.txt
 if [ -e /opt/sagan-control-daemon/enabled ]; then
     /opt/sagan-control-daemon/start.sh
 fi
+
+/usr/local/lib/python3.5/dist-packages/sagan/check-board.sh
