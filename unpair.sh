@@ -19,7 +19,11 @@ echo '{
     "device_id": "",
     "ssid": "",
     "psk": "",
+<<<<<<< Updated upstream
     "host": "http://launchpad.cuberider.com",
+=======
+    "host": "http://dreamcoder.dreamup.org",
+>>>>>>> Stashed changes
     "interface": "wlan0",
     "user": "pi",
     "error": ""

@@ -6,7 +6,7 @@ t0=$(date +%s)
 
 while test $(date +%s) -le $((${t0} + $1))
 do
-    if ping -c 1 "cuberider.com" &>> /dev/null
+    if ping -c 1 "dreamcoder.dreamup.org" &>> /dev/null
     then
         exit 0
     fi
