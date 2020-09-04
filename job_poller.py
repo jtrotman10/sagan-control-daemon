@@ -138,7 +138,8 @@ class Socket:
 
     def _run(self):
         while not self._stop.is_set():
-            self.socket.run_forever()
+            # setting ping_interval enables multi-threading
+            self.socket.run_forever(ping_interval=5)
 
     def on_message(self, _, message):
         payload = json.loads(message)['a']
