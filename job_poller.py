@@ -375,6 +375,7 @@ class Poller:
         self.post_results()
         self.experiment_process = None
         self.clean_sandbox()
+        self.socket.emit("stdout", "{\"exitCode\": 0}")
         self.socket.close()
         self.set_leds('g')
         self.leds_lock.release()
