@@ -19,7 +19,7 @@ echo '{
     "device_id": "",
     "ssid": "",
     "psk": "",
-    "host": "http://launchpad.cuberider.com",
+    "host": "http://dreamcoder.dreamup.org",
     "interface": "wlan0",
     "user": "pi",
     "error": ""
